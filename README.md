@@ -30,7 +30,6 @@ No tracking, no analytics, no background services.
 ## Build
 
 ```bash
-cd android
 ./gradlew assembleDebug
 # APK: app/build/outputs/apk/debug/app-debug.apk
 ```
