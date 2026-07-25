@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/settingsToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
+        app:title="@string/action_settings"
+        app:navigationIcon="@drawable/ic_arrow_back" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="32dp">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="@string/settings_start_page">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/startPageInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_display" />
+
+            <Switch
+                android:id="@+id/swDark"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_dark_mode" />
+
+            <Switch
+                android:id="@+id/swDesktop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/action_desktop" />
+
+            <Switch
+                android:id="@+id/swImages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_load_images" />
+
+            <Switch
+                android:id="@+id/swJs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/action_javascript" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_privacy" />
+
+            <Switch
+                android:id="@+id/swBlockAds"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_block_ads" />
+
+            <Switch
+                android:id="@+id/swBlockTrackers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_block_trackers" />
+
+            <Switch
+                android:id="@+id/swBlockWebRTC"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_block_webrtc" />
+
+            <Switch
+                android:id="@+id/swHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/settings_save_history" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/settings_protection_stats" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:background="@drawable/stats_card_bg">
+
+                    <TextView
+                        android:id="@+id/txtAdsCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/brand_primary"
+                        android:text="0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textSize="12sp"
+                        android:text="@string/settings_ads_blocked" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:background="@drawable/stats_card_bg">
+
+                    <TextView
+                        android:id="@+id/txtTrackersCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/secure"
+                        android:text="0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textSize="12sp"
+                        android:text="@string/settings_trackers_blocked" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnClearData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/action_clear_data" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_library" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowDownloads" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowHistory" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowBookmarks" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_page" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowBookmark" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowOpenExternal" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowFind" />
+
+            <include layout="@layout/item_setting_row"
+                android:id="@+id/rowExit" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/section_addons" />
+
+            <Button
+                android:id="@+id/btnInstallAddon"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/action_install" />
+
+            <TextView
+                android:id="@+id/addonsEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/addons_empty"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <LinearLayout
+                android:id="@+id/addonsList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

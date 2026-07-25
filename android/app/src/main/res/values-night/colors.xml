@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="url_bar_background">@color/surface_dark</color>
+    <color name="bg_light">@color/bg_dark</color>
+    <color name="stats_card_bg">@color/surface_dark</color>
+    <color name="widget_bg_color">@color/surface_dark</color>
+    <color name="widget_stroke_color">@color/divider_dark</color>
+</resources>

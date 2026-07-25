@@ -1,0 +1,43 @@
+pkgname=lumen
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Lightweight private browser for Alpine - single-file PyQt6/QtWebEngine"
+url="https://github.com/lumen"
+arch="noarch"
+license="MIT"
+depends="python3 py3-qt6 py3-pyqt6-webengine py3-pyqt6-sip qt6-qtwebengine"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::file:///dev/null"
+builddir="$srcdir"
+
+package() {
+	mkdir -p "$pkgdir/usr/lib/lumen" \
+		"$pkgdir/usr/bin" \
+		"$pkgdir/usr/share/applications" \
+		"$pkgdir/usr/share/icons/hicolor/256x256/apps"
+
+	install -Dm644 "$startdir/src/lumen.py" "$pkgdir/usr/lib/lumen/lumen.py"
+	cp -r "$startdir/src/assets" "$pkgdir/usr/lib/lumen/assets"
+	install -Dm644 "$startdir/resources/lumen.svg" \
+		"$pkgdir/usr/share/icons/hicolor/256x256/apps/lumen.svg"
+
+	cat > "$pkgdir/usr/bin/lumen" << 'EOF'
+#!/bin/sh
+cd /usr/lib/lumen
+exec python3 lumen.py "$@"
+EOF
+	chmod +x "$pkgdir/usr/bin/lumen"
+
+	cat > "$pkgdir/usr/share/applications/lumen.desktop" << 'EOF'
+[Desktop Entry]
+Name=Lumen
+Comment=Lightweight private browser
+Exec=/usr/bin/lumen %u
+Icon=lumen
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+StartupWMClass=Lumen
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;x-scheme-handler/http;x-scheme-handler/https;
+EOF
+}

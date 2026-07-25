@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SettingsSectionHeader">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+</resources>
