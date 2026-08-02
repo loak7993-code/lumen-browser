@@ -440,10 +440,12 @@ class MainActivity : AppCompatActivity() {
             android.widget.Toast.makeText(this, "No popup path in manifest", android.widget.Toast.LENGTH_LONG).show()
             return
         }
-        val html = ExtensionManager.loadFile(ext.id, popupPath) ?: run {
-            android.widget.Toast.makeText(this, "Could not load popup: $popupPath", android.widget.Toast.LENGTH_LONG).show()
-            return
-        }
+
+        val dir = java.io.File(filesDir, "extensions/${ext.id}")
+        val popupFile = java.io.File(dir, popupPath)
+        val fileExists = popupFile.exists()
+        val html = ExtensionManager.loadFile(ext.id, popupPath)
+        val htmlLen = html?.length ?: 0
 
         val shim = ExtensionManager.buildChromeApiShim(ext.id)
         val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
@@ -459,6 +461,19 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(popupWidth, popupHeight)
         }
 
+        val diagText = TextView(this).apply {
+            text = "EXT: ${ext.name}\nID: ${ext.id}\nPopup path: $popupPath\nFile exists: $fileExists\nHTML length: $htmlLen\nBase URL: $baseUrl\nDir: ${dir.absolutePath}\nDir exists: ${dir.exists()}\n\nFiles in dir:\n${dir.listFiles()?.joinToString("\n") { "  ${it.name} (${it.length()}B)" } ?: "(empty)"}"
+            setTextColor(0xFF00FF41.toInt())
+            textSize = 10f
+            setPadding(16, 16, 16, 16)
+            setBackgroundColor(0xFF07080F.toInt())
+        }
+        val scrollView = android.widget.ScrollView(this).apply {
+            addView(diagText)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        }
+        container.addView(scrollView)
+
         val popupWv = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -467,15 +482,26 @@ class MainActivity : AppCompatActivity() {
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = false
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 2f)
+            setBackgroundColor(0xFF07080F.toInt())
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
+                    diagText.text = diagText.text.toString() + "\n\n[onPageFinished] URL: $url"
                     view?.evaluateJavascript(shim, null)
+                }
+                override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                    super.onReceivedError(view, request, error)
+                    diagText.text = diagText.text.toString() + "\n\n[ERROR] ${error?.description}"
+                }
+            }
+            webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    diagText.text = diagText.text.toString() + "\n[JS] ${consoleMessage?.message()}"
+                    return true
                 }
             }
         }
-
         container.addView(popupWv)
 
         val dialog = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar)
@@ -489,7 +515,11 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnDismissListener { popupWv.destroy() }
         dialog.show()
 
-        popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
+        if (html != null) {
+            popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
+        } else {
+            popupWv.loadDataWithBaseURL(baseUrl, "<html><body style='background:#07080F;color:#f00'><h2>Could not load popup</h2><p>File: $popupPath</p></body></html>", "text/html", "UTF-8", baseUrl)
+        }
     }
 
     private fun navigateTo(url: String) {
