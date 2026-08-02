@@ -50,6 +50,7 @@
                 app:tint="?attr/colorOnSurface" />
 
             <FrameLayout
+                android:id="@+id/urlBarContainer"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_marginStart="6dp"

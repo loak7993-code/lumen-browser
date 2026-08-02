@@ -115,8 +115,10 @@ class MainActivity : AppCompatActivity() {
             if (hasFocus) {
                 b.urlField.selectAll()
                 b.btnClear.visibility = View.VISIBLE
+                expandUrlBar()
             } else {
                 b.btnClear.visibility = View.GONE
+                collapseUrlBar()
             }
         }
         b.urlField.addTextChangedListener(object : TextWatcher {
@@ -129,6 +131,57 @@ class MainActivity : AppCompatActivity() {
         b.btnClear.setOnClickListener {
             b.urlField.setText("")
             b.urlField.requestFocus()
+        }
+    }
+
+    private fun expandUrlBar() {
+        val navButtons = listOf(b.btnBack, b.btnForward, b.btnHome, b.btnRefresh, b.btnMenu)
+        for (btn in navButtons) {
+            btn.animate()
+                .alpha(0f)
+                .scaleX(0.7f)
+                .scaleY(0.7f)
+                .setDuration(200)
+                .withEndAction { btn.visibility = View.INVISIBLE }
+                .start()
+        }
+        b.urlBarContainer.animate()
+            .scaleX(1.04f)
+            .scaleY(1.04f)
+            .setDuration(200)
+            .start()
+        animateTextSize(b.urlField, 16f)
+    }
+
+    private fun collapseUrlBar() {
+        val navButtons = listOf(b.btnBack, b.btnForward, b.btnHome, b.btnRefresh, b.btnMenu)
+        for (btn in navButtons) {
+            btn.visibility = View.VISIBLE
+            btn.animate()
+                .alpha(if (btn == b.btnBack && (tabs.current?.canGoBack != true)) 0.4f
+                      else if (btn == b.btnForward && (tabs.current?.canGoForward != true)) 0.4f
+                      else 1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(200)
+                .start()
+        }
+        b.urlBarContainer.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(200)
+            .start()
+        animateTextSize(b.urlField, 14f)
+    }
+
+    private fun animateTextSize(view: EditText, targetSp: Float) {
+        val currentSp = view.textSize / view.resources.displayMetrics.scaledDensity
+        android.animation.ValueAnimator.ofFloat(currentSp, targetSp).apply {
+            duration = 200
+            addUpdateListener { animator ->
+                view.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, animator.animatedValue as Float)
+            }
+            start()
         }
     }
 
