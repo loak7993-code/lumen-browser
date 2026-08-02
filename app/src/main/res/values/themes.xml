@@ -11,5 +11,12 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="35">true</item>
         <item name="android:enforceStatusBarContrast">false</item>
         <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowAnimationStyle">@style/Animation.LWBrowser</item>
+    </style>
+    <style name="Animation.LWBrowser" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/activity_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/activity_exit</item>
     </style>
 </resources>

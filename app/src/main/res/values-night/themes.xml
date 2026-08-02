@@ -11,5 +11,6 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="35">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
         <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowAnimationStyle">@style/Animation.LWBrowser</item>
     </style>
 </resources>

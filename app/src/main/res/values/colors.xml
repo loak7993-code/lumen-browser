@@ -14,4 +14,12 @@
     <color name="divider_dark">#2C2F34</color>
     <color name="progress">#3B82F6</color>
     <color name="secure">#16A34A</color>
+    <color name="url_bar_background">@color/surface_light</color>
+    <color name="url_bar_stroke">@color/divider_light</color>
+    <color name="stats_card_bg">@color/surface_light</color>
+    <color name="widget_bg_color">@color/surface_light</color>
+    <color name="widget_stroke_color">@color/divider_light</color>
+    <color name="dialog_bg_color">#FFFFFF</color>
+    <color name="progress_track">#1A3B82F6</color>
+    <color name="ripple_overlay">#0A000000</color>
 </resources>

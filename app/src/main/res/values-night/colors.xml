@@ -5,4 +5,7 @@
     <color name="stats_card_bg">@color/surface_dark</color>
     <color name="widget_bg_color">@color/surface_dark</color>
     <color name="widget_stroke_color">@color/divider_dark</color>
+    <color name="dialog_bg_color">#1E2024</color>
+    <color name="progress_track">#1A3B82F6</color>
+    <color name="ripple_overlay">#0FFFFFFF</color>
 </resources>

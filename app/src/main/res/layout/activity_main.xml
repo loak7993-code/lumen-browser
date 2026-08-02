@@ -10,11 +10,11 @@
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
+        android:minHeight="56dp"
         android:background="?attr/colorSurface"
         android:elevation="0dp"
-        app:contentInsetStart="4dp"
-        app:contentInsetEnd="4dp">
+        app:contentInsetStart="6dp"
+        app:contentInsetEnd="6dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,8 +24,8 @@
 
             <ImageButton
                 android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_back"
                 android:src="@drawable/ic_arrow_back"
@@ -33,8 +33,8 @@
 
             <ImageButton
                 android:id="@+id/btnForward"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_forward"
                 android:src="@drawable/ic_arrow_forward"
@@ -42,9 +42,9 @@
 
             <FrameLayout
                 android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
                 android:background="@drawable/url_bar_bg"
                 android:padding="2dp">
@@ -54,7 +54,7 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:layout_gravity="center_vertical"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="10dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_lock"
                     app:tint="@color/secure" />
@@ -63,21 +63,22 @@
                     android:id="@+id/urlField"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="32dp"
-                    android:layout_marginEnd="32dp"
+                    android:layout_marginStart="36dp"
+                    android:layout_marginEnd="36dp"
                     android:background="@android:color/transparent"
                     android:hint="@string/hint_url"
                     android:imeOptions="actionGo"
                     android:inputType="textUri|textNoSuggestions"
                     android:maxLines="1"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:textColorHint="?android:attr/textColorHint" />
 
                 <ImageButton
                     android:id="@+id/btnClear"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center_vertical|end"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginEnd="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_clear"
@@ -87,8 +88,8 @@
 
             <ImageButton
                 android:id="@+id/btnRefresh"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_refresh"
                 android:src="@drawable/ic_refresh"
@@ -96,8 +97,8 @@
 
             <ImageButton
                 android:id="@+id/btnMenu"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_settings"
                 android:src="@drawable/ic_menu"

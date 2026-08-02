@@ -5,23 +5,24 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bottom_sheet_bg"
-    android:paddingBottom="16dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="24dp">
 
     <View
-        android:layout_width="32dp"
-        android:layout_height="4dp"
+        android:layout_width="36dp"
+        android:layout_height="5dp"
         android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="12dp"
-        android:background="@color/divider_light"
-        android:alpha="0.6" />
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/sheet_handle_bg"
+        android:alpha="0.4" />
 
     <LinearLayout
         android:id="@+id/quickActions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="12dp"
         android:weightSum="4">
 
         <LinearLayout
@@ -31,21 +32,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
+            android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_arrow_back"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_back"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -55,21 +57,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
+            android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_arrow_forward"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_forward"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -79,21 +82,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
+            android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_share"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_share"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -103,39 +107,41 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="8dp"
+            android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_refresh"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_refresh"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="20dp"
         android:background="@color/divider_light"
-        android:alpha="0.5" />
+        android:alpha="0.4" />
 
     <LinearLayout
         android:id="@+id/rowBookmark"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="24dp"
         android:background="?attr/selectableItemBackground">
 
         <ImageView
@@ -150,16 +156,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="20dp"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurface" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/rowFind"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="24dp"
         android:background="?attr/selectableItemBackground">
 
         <ImageView
@@ -174,16 +181,17 @@
             android:layout_weight="1"
             android:layout_marginStart="20dp"
             android:text="@string/action_find"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurface" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/rowDesktop"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="24dp"
         android:background="?attr/selectableItemBackground">
 
         <ImageView
@@ -198,8 +206,9 @@
             android:layout_weight="1"
             android:layout_marginStart="20dp"
             android:text="@string/action_desktop"
-            android:textSize="15sp" />
-        <Switch
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurface" />
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/swDesktopMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -208,10 +217,10 @@
     <LinearLayout
         android:id="@+id/rowExtensions"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="24dp"
         android:background="?attr/selectableItemBackground">
 
         <ImageView
@@ -226,7 +235,8 @@
             android:layout_weight="1"
             android:layout_marginStart="20dp"
             android:text="@string/section_addons"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurface" />
     </LinearLayout>
 
     <View
@@ -234,15 +244,16 @@
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="20dp"
         android:background="@color/divider_light"
-        android:alpha="0.5" />
+        android:alpha="0.4" />
 
     <GridLayout
         android:id="@+id/bottomGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:columnCount="4"
-        android:paddingHorizontal="8dp">
+        android:paddingHorizontal="12dp">
 
         <LinearLayout
             android:id="@+id/gridNewTab"
@@ -255,17 +266,18 @@
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_add"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_new_tab"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -279,17 +291,18 @@
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_tabs"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_tabs"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -303,17 +316,18 @@
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_history"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_history"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
 
         <LinearLayout
@@ -327,35 +341,37 @@
             android:background="?attr/selectableItemBackgroundBorderless">
 
             <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_download"
                 app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:text="@string/action_downloads"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
     </GridLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="20dp"
         android:background="@color/divider_light"
-        android:alpha="0.5" />
+        android:alpha="0.4" />
 
     <LinearLayout
         android:id="@+id/rowSettings"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="20dp"
+        android:paddingHorizontal="24dp"
         android:background="?attr/selectableItemBackground">
 
         <ImageView
@@ -370,6 +386,7 @@
             android:layout_weight="1"
             android:layout_marginStart="20dp"
             android:text="@string/action_settings"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:textColor="?attr/colorOnSurface" />
     </LinearLayout>
 </LinearLayout>

@@ -201,6 +201,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         sheet.show()
+        sheet.window?.let { w ->
+            w.setWindowAnimations(R.style.Animation_LWBrowser)
+            w.decorView.alpha = 0f
+            w.decorView.animate().alpha(1f).setDuration(200).start()
+        }
     }
 
     private var pendingSearch: String? = null
@@ -342,6 +347,8 @@ class MainActivity : AppCompatActivity() {
         createdWebView = tab.webView
         updateChromeFromTab(tab)
         b.urlField.setText(displayUrl(tab.url))
+        tab.webView.alpha = 0f
+        tab.webView.animate().alpha(1f).setDuration(200).start()
     }
 
     private lateinit var createdWebView: WebView
@@ -439,9 +446,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateProgress(p: Int) {
-        b.progress.progress = p
-        b.progress.visibility = if (p in 1..99) View.VISIBLE else View.GONE
-        b.swipe.isRefreshing = p >= 0 && p < 100 && p > 80 && false
+        if (p in 1..99) {
+            if (b.progress.visibility != View.VISIBLE) {
+                b.progress.visibility = View.VISIBLE
+                b.progress.alpha = 0f
+                b.progress.animate().alpha(1f).setDuration(150).start()
+            }
+            val current = b.progress.progress
+            if (p > current) {
+                val anim = android.animation.ObjectAnimator.ofInt(b.progress, "progress", current, p)
+                anim.duration = 200
+                anim.interpolator = android.view.animation.DecelerateInterpolator()
+                anim.start()
+            }
+        } else {
+            b.progress.animate().alpha(0f).setDuration(200).withEndAction {
+                b.progress.visibility = View.GONE
+                b.progress.progress = 0
+            }.start()
+        }
     }
 
     private fun setRefreshIcon(loading: Boolean) {
@@ -659,6 +682,9 @@ class MainActivity : AppCompatActivity() {
         binding.findNext.setOnClickListener { currentWebView()?.findNext(true) }
         binding.findPrev.setOnClickListener { currentWebView()?.findNext(false) }
         binding.findClose.setOnClickListener { closeFindBar() }
+        binding.root.alpha = 0f
+        binding.root.translationY = -20f
+        binding.root.animate().alpha(1f).translationY(0f).setDuration(200).start()
         binding.findField.requestFocus()
         showKeyboard(binding.findField)
     }
@@ -670,8 +696,10 @@ class MainActivity : AppCompatActivity() {
     private fun closeFindBar() {
         currentWebView()?.clearMatches()
         val container = b.root as ViewGroup
-        container.removeView(findBinding?.root)
-        findBinding = null
+        findBinding?.root?.animate()?.alpha(0f)?.translationY(-20f)?.setDuration(150)?.withEndAction {
+            container.removeView(findBinding?.root)
+            findBinding = null
+        }?.start()
         hideKeyboard()
     }
 
