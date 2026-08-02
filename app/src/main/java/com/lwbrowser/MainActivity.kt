@@ -538,44 +538,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Modal bottom-sheet popup — slides up from the bottom, full-width, with
-        // a header (extension name + close X) and the WebView filling the rest.
-        val sheet = BottomSheetDialog(this)
+        // Modal dialog that sits at the bottom of the screen with an explicit
+        // height. BottomSheetDialog wraps content to 0px for a WebView that
+        // hasn't loaded yet — a regular Dialog with explicit dimensions is
+        // reliable.
+        val dialog = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar)
         val binding = DialogExtensionPopupBinding.inflate(LayoutInflater.from(this))
         binding.extPopupTitle.text = ext.name
-        binding.extPopupClose.setOnClickListener { sheet.dismiss() }
-        // Fullscreen toggle: expand the sheet to fill the whole screen, or
-        // shrink back to the normal peek height. Drag is disabled in fullscreen
-        // so the user can't accidentally close it.
+        binding.extPopupClose.setOnClickListener { dialog.dismiss() }
+        // Fullscreen toggle: swap between 90% height and full screen height.
         var isFullscreen = false
         binding.extPopupFullscreen.setOnClickListener {
             isFullscreen = !isFullscreen
-            if (isFullscreen) {
-                sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-                sheet.behavior.peekHeight = displayHeight
-                sheet.behavior.skipCollapsed = true
-                sheet.behavior.isDraggable = false
-            } else {
-                sheet.behavior.peekHeight = popupHeight
-                sheet.behavior.isDraggable = true
-            }
+            val h = if (isFullscreen) displayHeight else popupHeight
+            dialog.window?.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, h)
         }
         binding.extPopupWebContainer.addView(popupWv)
-        sheet.setContentView(binding.root)
-        // Give the sheet root an explicit height so the WebView fills it
-        // (match_parent in a BottomSheetDialog wraps to content height, which
-        // is too small — the WebView ends up a tiny strip).
-        binding.root.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            popupHeight
-        )
-        sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-        sheet.behavior.peekHeight = popupHeight
-        sheet.behavior.skipCollapsed = true
-        // Destroy the WebView when the sheet is dismissed (close button, back
-        // button, or drag-down) so it doesn't leak.
-        sheet.setOnDismissListener { popupWv.destroy() }
-        sheet.show()
+        dialog.setContentView(binding.root)
+        dialog.window?.let { w ->
+            w.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, popupHeight)
+            w.setGravity(android.view.Gravity.BOTTOM)
+            w.setBackgroundDrawableResource(android.R.color.transparent)
+            w.setDimAmount(0.4f)
+            // Slide-up animation
+            w.setWindowAnimations(android.R.style.Animation_InputMethod)
+        }
+        // Destroy the WebView when the dialog is dismissed.
+        dialog.setOnDismissListener { popupWv.destroy() }
+        // Close on back press (default Dialog behavior) + touch outside.
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.show()
 
         popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
     }
