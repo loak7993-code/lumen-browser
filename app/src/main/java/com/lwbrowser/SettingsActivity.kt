@@ -36,7 +36,7 @@ class SettingsActivity : AppCompatActivity() {
         b.settingsToolbar.setNavigationOnClickListener { finish() }
 
         b.startPageInput.setText(
-            if (Prefs.startPage == Prefs.DEFAULT_START_PAGE) "Dashboard" else Prefs.startPage
+            if (Prefs.startPage == Prefs.DEFAULT_START_PAGE) "DuckDuckGo" else Prefs.startPage
         )
         b.swDark.isChecked = Prefs.forceDark
         b.swNightMode.isChecked = Prefs.nightMode
@@ -65,9 +65,9 @@ class SettingsActivity : AppCompatActivity() {
         b.startPageInput.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 val text = b.startPageInput.text.toString().trim()
-                if (text.isEmpty() || text.equals("Dashboard", ignoreCase = true)) {
+                if (text.isEmpty() || text.equals("DuckDuckGo", ignoreCase = true)) {
                     Prefs.startPage = Prefs.DEFAULT_START_PAGE
-                    b.startPageInput.setText("Dashboard")
+                    b.startPageInput.setText("DuckDuckGo")
                 } else {
                     Prefs.startPage = text
                 }
