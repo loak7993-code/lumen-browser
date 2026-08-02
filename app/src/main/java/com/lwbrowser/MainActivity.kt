@@ -415,9 +415,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showExtensionPopupPicker() {
-        val exts = ExtensionManager.all().filter { it.enabled && it.browserAction["popup"]?.isNotEmpty() == true }
+        ExtensionManager.reload()
+        val allExts = ExtensionManager.all()
+        val exts = allExts.filter { it.enabled && it.browserAction["popup"]?.isNotEmpty() == true }
         if (exts.isEmpty()) {
-            android.widget.Toast.makeText(this, "No extensions with popups installed. Install an extension first.", android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(this, "No extensions with popups (${allExts.size} installed, ${allExts.filter { it.enabled }.size} enabled). Opening settings.", android.widget.Toast.LENGTH_LONG).show()
             startActivity(Intent(this, SettingsActivity::class.java))
             return
         }
@@ -434,7 +436,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showExtensionPopup(ext: com.lwbrowser.ext.Extension) {
-        val popupPath = ext.browserAction["popup"] ?: return
+        val popupPath = ext.browserAction["popup"] ?: run {
+            android.widget.Toast.makeText(this, "No popup path in manifest", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
         val html = ExtensionManager.loadFile(ext.id, popupPath) ?: run {
             android.widget.Toast.makeText(this, "Could not load popup: $popupPath", android.widget.Toast.LENGTH_LONG).show()
             return
@@ -442,6 +447,17 @@ class MainActivity : AppCompatActivity() {
 
         val shim = ExtensionManager.buildChromeApiShim(ext.id)
         val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
+
+        val density = resources.displayMetrics.density
+        val popupWidth = (360 * density).toInt()
+        val popupHeight = (640 * density).toInt()
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(0xFF07080F.toInt())
+            setPadding(0, 0, 0, 0)
+            layoutParams = LinearLayout.LayoutParams(popupWidth, popupHeight)
+        }
 
         val popupWv = WebView(this).apply {
             settings.javaScriptEnabled = true
@@ -451,6 +467,7 @@ class MainActivity : AppCompatActivity() {
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = false
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
@@ -459,18 +476,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(popupWv)
-            .setOnDismissListener { popupWv.destroy() }
-            .create()
-        dialog.setOnShowListener {
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-            val params = dialog.window?.attributes
-            params?.width = LinearLayout.LayoutParams.WRAP_CONTENT
-            params?.height = LinearLayout.LayoutParams.WRAP_CONTENT
-            params?.gravity = android.view.Gravity.CENTER or android.view.Gravity.TOP
-            dialog.window?.attributes = params
+        container.addView(popupWv)
+
+        val dialog = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar)
+        dialog.setContentView(container)
+        dialog.window?.let { w ->
+            w.setLayout(popupWidth, popupHeight)
+            w.setGravity(android.view.Gravity.CENTER)
+            w.setBackgroundDrawableResource(android.R.color.transparent)
+            w.setDimAmount(0.3f)
         }
+        dialog.setOnDismissListener { popupWv.destroy() }
         dialog.show()
 
         popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
