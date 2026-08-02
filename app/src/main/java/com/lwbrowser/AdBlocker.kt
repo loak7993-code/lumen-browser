@@ -108,17 +108,17 @@ object AdBlocker {
         "/banner", "/bannerads", "/popup", "/popunder", "/prebid", "/adsystem",
         "/tracker", "/tracker/", "/tracking", "/tracking/", "/track.gif",
         "/track.js", "/beacon", "/beacon/", "/beacon.gif", "/beacon.js",
-        "/analytics", "/analytics.js", "/analytics/", "/gampad", "/gampad/",
+        "/analytics.js", "/analytics/", "/gampad", "/gampad/",
         "/doubleclick", "/gtm.js", "/gtm/", "/tagmanager", "/tealium",
         "/scorecard", "/quantserve", "/chartbeat", "/pixel.gif", "/pixel.js",
-        "/log.gif", "/log.js", "/__log", "/event.gif", "/event.js", "/collect",
+        "/log.gif", "/log.js", "/__log", "/event.gif", "/event.js",
         "/adsense", "/adview", "/adclick", "/adcall",
-        "/adrender", "/adserve", "/adspaces", "/bouncer", "/sync",
-        "/redirect", "/impression", "/track/", "/track?", "/stats",
-        "/metrics", "/telemetry", "/sentry", "/amplitude", "/heap",
+        "/adrender", "/adserve", "/adspaces", "/bouncer",
+        "/impression", "/track/", "/track?",
+        "/sentry", "/amplitude", "/heap",
         "/mouseflow", "/criteo", "/pubmatic", "/rubicon", "/openx",
         "/bidrequest", "/adnxs", "/moat", "/hotjar", "/clarity",
-        "/pixel", "/ping", "/visit", "/visit/", "/adsbygoogle",
+        "/adsbygoogle",
     )
 
     private val blockedFileExt = setOf(
@@ -150,18 +150,29 @@ object AdBlocker {
         val host = uri.host ?: return BlockResult.Allow
         val path = uri.path ?: ""
 
-        if (host in allowlistHosts || allowlistHosts.any { host.endsWith(".$it") }) {
-            return BlockResult.Allow
-        }
+        // H8: check ad/tracker hosts BEFORE the allowlist so ads.google.com etc.
+        // are blocked even though bare "google.com" is allowlisted. The allowlist
+        // suffix-match (host.endsWith(".google.com")) was letting every Google
+        // ad/tracker subdomain through.
         if (host in adHosts || adHosts.any { host.endsWith(".$it") }) {
             if (Prefs.blockAds) { adsBlocked.incrementAndGet(); return BlockResult.BlockAd }
         }
         if (host in trackerHosts || trackerHosts.any { host.endsWith(".$it") }) {
             if (Prefs.blockTrackers) { trackersBlocked.incrementAndGet(); return BlockResult.BlockTracker }
         }
+        // Allowlist only applies once we know it's not an ad/tracker host.
+        if (host in allowlistHosts || allowlistHosts.any { host.endsWith(".$it") }) {
+            return BlockResult.Allow
+        }
         if (Prefs.blockAds && path.isNotEmpty()) {
+            // C1: exact-segment match, not bare startsWith, so "/collect" doesn't
+            // blank "/collections/all" (Shopify), "/visit" doesn't blank "/visit-us", etc.
             for (p in blockedPaths) {
-                if (path.startsWith(p)) { adsBlocked.incrementAndGet(); return BlockResult.BlockAd }
+                val pp = if (p.endsWith("/")) p else "$p/"
+                if (path == p || path.startsWith(pp)) {
+                    adsBlocked.incrementAndGet()
+                    return BlockResult.BlockAd
+                }
             }
         }
         if (Prefs.blockTrackers) {
@@ -270,15 +281,10 @@ object AntiFingerprint {
                         if(p==='UNMASKED_RENDERER_WEBGL')return 'ANGLE (Intel)';
                         return origGetParameter.call(this,p);
                     };
-                    var origToDataURL=HTMLCanvasElement.prototype.toDataURL;
-                    HTMLCanvasElement.prototype.toDataURL=function(){
-                        var ctx=this.getContext('2d');
-                        if(ctx){
-                            ctx.fillStyle='rgba(0,0,0,0.01)';
-                            ctx.fillRect(0,0,1,1);
-                        }
-                        return origToDataURL.apply(this,arguments);
-                    };
+                    // H10: do NOT mutate the canvas before toDataURL — the fillRect
+                    // corrupted every canvas export (QR codes, signature pads, chart
+                    // PNG downloads, meme generators, image croppers). Only spoof the
+                    // WebGL vendor/renderer; leave 2D canvas output untouched.
                 }catch(e){}
             })();
         """.trimIndent()

@@ -44,6 +44,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
     private val tabs = TabsManager()
     private var findBinding: FindBarBinding? = null
+    // H9: pending reader content injected from onPageFinished when reader.html
+    // finishes loading, replacing the fragile 500ms postDelayed race.
+    private var pendingReader: Triple<String, String, String>? = null
     private var errorBinding: ErrorPageBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -460,7 +463,9 @@ class MainActivity : AppCompatActivity() {
             settings.allowContentAccess = true
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = false
-            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            // L1: don't force LAYER_TYPE_HARDWARE — WebView manages its own
+            // layers and forcing hardware can cause text artifacts or a blank
+            // popup on some GPUs.
             setBackgroundColor(0xFF07080F.toInt())
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
             // Expose the Chrome API bridge so popup scripts can call chrome.storage.* etc.
@@ -549,12 +554,14 @@ class MainActivity : AppCompatActivity() {
     private fun injectCosmeticFilters(wv: WebView) {
         val css = CosmeticFilters.cssHideRules()
         val selectorsJson = CosmeticFilters.cssSelectors.joinToString(",") { "\"$it\"" }
+        // Escape the CSS for safe embedding in a single-quoted JS string literal.
+        val cssEsc = css.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
         val js = """
             (function(){
                 if(document.getElementById('__lumen_cosmetic'))return;
                 var s=document.createElement('style');
                 s.id='__lumen_cosmetic';
-                s.textContent=${"\"\"\""}$css${"\"\"\""};
+                s.textContent='$cssEsc';
                 (document.head||document.documentElement).appendChild(s);
                 var selectors=[$selectorsJson];
                 var observer=new MutationObserver(function(){
@@ -620,19 +627,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onReaderExtracted(title: String, meta: String, content: String) {
-        val escapedTitle = title.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-        val escapedMeta = meta.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-        val escapedContent = content.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+        // L3: also escape \r and Unicode line/paragraph separators which would
+        // break the single-quoted JS string literal and render the reader blank.
+        fun esc(s: String) = s.replace("\\", "\\\\").replace("'", "\\'")
+            .replace("\n", "\\n").replace("\r", "\\r")
+            .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+        val escapedTitle = esc(title)
+        val escapedMeta = esc(meta)
+        val escapedContent = esc(content)
         val wv = currentWebView() ?: return
+        // H9: store the content and inject it from onPageFinished when the
+        // reader page finishes loading, instead of a fixed 500ms postDelayed
+        // that races the load and can land on a blank page (or the wrong tab).
+        pendingReader = Triple(escapedTitle, escapedMeta, escapedContent)
         wv.loadUrl("file:///android_asset/reader.html")
-        wv.postDelayed({
-            wv.evaluateJavascript(
-                "document.getElementById('readerTitle').textContent='$escapedTitle';" +
-                "document.getElementById('readerMeta').textContent='$escapedMeta';" +
-                "document.getElementById('readerContent').innerHTML='$escapedContent';",
-                null
-            )
-        }, 500)
     }
 
     private fun captureScreenshot() {
@@ -696,7 +704,7 @@ class MainActivity : AppCompatActivity() {
                     val css = ExtensionManager.loadFile(ext.id, cssFile) ?: continue
                     val escaped = css.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
                     wv.evaluateJavascript(
-                        "(function(){var s=document.createElement('style');s.textContent='$escaped';document.head.appendChild(s);})();",
+                        "(function(){var s=document.createElement('style');s.textContent='$escaped';(document.head||document.documentElement).appendChild(s);})();",
                         null
                     )
                 }
@@ -708,14 +716,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // H7: track which extensions have had their background scripts injected
+    // this session, so they don't re-run on every page navigation (clobbering
+    // page globals and re-initializing state on each load).
+    private val injectedBackground = mutableSetOf<String>()
+
     private fun injectBackgroundScripts(wv: WebView) {
         for (ext in ExtensionManager.backgroundScripts()) {
+            if (ext.id in injectedBackground) continue
             val bg = ext.background ?: continue
             wv.evaluateJavascript(ExtensionManager.buildChromeApiShim(ext.id), null)
             for (scriptFile in bg.scripts) {
                 val js = ExtensionManager.loadFile(ext.id, scriptFile) ?: continue
                 wv.evaluateJavascript(js, null)
             }
+            injectedBackground.add(ext.id)
         }
     }
 
@@ -791,8 +806,14 @@ class MainActivity : AppCompatActivity() {
         s.displayZoomControls = false
         s.allowFileAccess = true
         s.allowContentAccess = true
-        s.javaScriptCanOpenWindowsAutomatically = false
-        s.mediaPlaybackRequiresUserGesture = true
+        // H2: enable multi-window support so window.open() fires onCreateWindow
+        // instead of navigating the current tab. Without this, OAuth/login
+        // popups (Sign in with Google/Facebook/Apple) break.
+        s.setSupportMultipleWindows(true)
+        s.javaScriptCanOpenWindowsAutomatically = true
+        // M13: allow muted autoplay (hero/background videos) while keeping
+        // user-gesture requirement for audible playback.
+        s.mediaPlaybackRequiresUserGesture = false
         s.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             s.safeBrowsingEnabled = true
@@ -803,9 +824,17 @@ class MainActivity : AppCompatActivity() {
         }
         val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         if (isDark) {
-            wv.setBackgroundColor(0xFF121316.toInt())
+            // Use the OLED obsidian background to match the app theme.
+            wv.setBackgroundColor(0xFF07080F.toInt())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                s.forceDark = WebSettings.FORCE_DARK_ON
+                // M2: on API 33+ prefer algorithmic darkening (respects
+                // prefers-color-scheme so already-dark sites aren't double-darkened);
+                // on API 29-32 fall back to legacy FORCE_DARK_ON.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    s.isAlgorithmicDarkeningAllowed = true
+                } else {
+                    s.forceDark = WebSettings.FORCE_DARK_ON
+                }
             }
         } else {
             wv.setBackgroundColor(android.graphics.Color.WHITE)
@@ -983,7 +1012,10 @@ class MainActivity : AppCompatActivity() {
             tab?.title = ""
             if (view != null) {
                 injectAntiFingerprint(view)
-                if (Prefs.blockAds) injectCosmeticFilters(view)
+                // M4: cosmetic filters only injected in onPageFinished (DOM is
+                // ready there; the MutationObserver covers late additions).
+                // Was also injected here in onPageStarted, doubling the counter
+                // and wasting a JS eval.
                 if (Prefs.blockWebRTC) injectWebRTCBlock(view)
                 if (url != null) {
                     injectBackgroundScripts(view)
@@ -1009,6 +1041,19 @@ class MainActivity : AppCompatActivity() {
                     injectContentScripts(view, url, "document_end")
                     injectContentScripts(view, url, "document_idle")
                 }
+                // H9: inject pending reader content once reader.html finishes
+                // loading, replacing the 500ms postDelayed race.
+                if (url != null && url.startsWith("file:///android_asset/reader.html")) {
+                    pendingReader?.let { (t, m, c) ->
+                        view.evaluateJavascript(
+                            "document.getElementById('readerTitle').textContent='$t';" +
+                            "document.getElementById('readerMeta').textContent='$m';" +
+                            "document.getElementById('readerContent').innerHTML='$c';",
+                            null
+                        )
+                        pendingReader = null
+                    }
+                }
             }
             if (tab != null && view != null) {
                 tab.canGoBack = view.canGoBack()
@@ -1027,7 +1072,7 @@ class MainActivity : AppCompatActivity() {
         override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
             val tab = view?.let { tabs.tabForView(it) }
             if (tab === tabs.current) {
-                showError(description ?: getString(R.string.empty_history))
+                showError(description ?: getString(R.string.error_network))
             }
         }
     }
@@ -1364,6 +1409,27 @@ class MainActivity : AppCompatActivity() {
             val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
             imm.hideSoftInputFromWindow(b.urlField.windowToken, 0)
             hideSuggestions()
+        }
+    }
+
+    // H5: the Activity declares configChanges=uiMode, so changing the dark-mode
+    // setting delivers a config-change to us instead of recreating us. Without
+    // this override, existing WebViews keep their old forceDark value and the
+    // toolbar flips dark while page content stays light.
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val dark = newConfig.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        tabs.all.forEach { tab ->
+            if (tab.webViewReady()) {
+                val s = tab.webView.settings
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    s.forceDark = if (dark) WebSettings.FORCE_DARK_ON else WebSettings.FORCE_DARK_OFF
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    s.isAlgorithmicDarkeningAllowed = dark
+                }
+                tab.webView.setBackgroundColor(if (dark) 0xFF07080F.toInt() else android.graphics.Color.WHITE)
+            }
         }
     }
 

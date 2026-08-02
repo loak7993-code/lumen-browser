@@ -42,7 +42,7 @@ object Prefs {
         set(value) = sp.edit().putBoolean("desktop_mode", value).apply()
 
     var blockWebRTC: Boolean
-        get() = sp.getBoolean("block_webrtc", true)
+        get() = sp.getBoolean("block_webrtc", false)
         set(value) = sp.edit().putBoolean("block_webrtc", value).apply()
 
     var searchEngine: String

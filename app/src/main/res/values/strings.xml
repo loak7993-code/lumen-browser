@@ -92,5 +92,7 @@
     <string name="action_find_close">Close find bar</string>
     <!-- L13: retry button (was using generic Refresh). -->
     <string name="action_retry">Retry</string>
+    <!-- M15: error fallback when description is null (was using empty_history 'No history yet'). -->
+    <string name="error_network">Unable to load page</string>
     <string name="action_close_find">Close find</string>
 </resources>
