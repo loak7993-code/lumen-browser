@@ -207,29 +207,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var pendingSearch: String? = null
-
     private fun navigateTo(url: String) {
         if (url.isEmpty()) return
         val wv = currentWebView() ?: return
-
-        if (url.startsWith("file:///android_asset/search.html#q=")) {
-            val query = android.net.Uri.parse(url).fragment
-                ?.removePrefix("q=")
-                ?.let { java.net.URLDecoder.decode(it, "UTF-8").replace("+", " ") }
-                ?: ""
-            val currentUrl = wv.url ?: ""
-            if (currentUrl.startsWith("file:///android_asset/search.html")) {
-                val escaped = query.replace("\\", "\\\\").replace("'", "\\'")
-                wv.evaluateJavascript("doSearch('$escaped')", null)
-            } else {
-                pendingSearch = query
-                wv.loadUrl("file:///android_asset/search.html")
-            }
-            b.urlField.clearFocus()
-            return
-        }
-
         wv.loadUrl(url)
         b.urlField.clearFocus()
     }
@@ -541,12 +521,6 @@ class MainActivity : AppCompatActivity() {
                     injectContentScripts(view, url, "document_end")
                     injectContentScripts(view, url, "document_idle")
                 }
-            }
-            if (pendingSearch != null && view != null && url?.startsWith("file:///android_asset/search.html") == true) {
-                val q = pendingSearch!!
-                pendingSearch = null
-                val escaped = q.replace("\\", "\\\\").replace("'", "\\'")
-                view.evaluateJavascript("doSearch('$escaped')", null)
             }
             val tab = tabs.current
             if (tab != null && view != null) {
