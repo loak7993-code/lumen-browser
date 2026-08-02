@@ -474,7 +474,7 @@ body {
     </div>
 
     <div class="search-wrap">
-      <input class="search-input" type="search" id="searchInput" placeholder="Search DuckDuckGo or type URL" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input class="search-input" type="search" id="searchInput" placeholder="Search Startpage or type URL" autocomplete="off" autocapitalize="off" spellcheck="false">
       <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>
       <div class="suggestions" id="suggestionsBox"></div>
     </div>
@@ -662,7 +662,7 @@ body {
     if (query.startsWith("http://") || query.startsWith("https://")) {
       window.openUrl(query);
     } else if (query.indexOf(" ") >= 0 || !query.match(/^[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}/)) {
-      window.openUrl("https://duckduckgo.com/?q=" + encodeURIComponent(query));
+      window.openUrl("https://www.startpage.com/sp/search?query=" + encodeURIComponent(query));
     } else {
       window.openUrl("https://" + query);
     }
