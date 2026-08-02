@@ -477,10 +477,24 @@ class MainActivity : AppCompatActivity() {
         if (!isDark) return
         val js = """
             (function(){
+                if(window.__lumen_dark_set)return;
+                window.__lumen_dark_set=true;
+                try{
+                    var orig=window.matchMedia.bind(window);
+                    window.matchMedia=function(q){
+                        var r=orig(q);
+                        if(q&&q.indexOf('prefers-color-scheme')>=0){
+                            Object.defineProperty(r,'matches',{get:function(){return true;}});
+                            Object.defineProperty(r,'media',{get:function(){return q;}});
+                        }
+                        return r;
+                    };
+                    window.matchMedia.toString=function(){return 'function matchMedia() { [native code] }';};
+                }catch(e){}
                 if(document.getElementById('__lumen_dark'))return;
                 var s=document.createElement('style');
                 s.id='__lumen_dark';
-                s.textContent=':root{color-scheme:dark !important;}html{background-color:#121316 !important;}';
+                s.textContent=':root{color-scheme:dark !important;}';
                 (document.head||document.documentElement).appendChild(s);
             })();
         """.trimIndent()
@@ -716,6 +730,9 @@ class MainActivity : AppCompatActivity() {
         val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         if (isDark) {
             wv.setBackgroundColor(0xFF121316.toInt())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                s.forceDark = WebSettings.FORCE_DARK_ON
+            }
         } else {
             wv.setBackgroundColor(android.graphics.Color.WHITE)
         }
