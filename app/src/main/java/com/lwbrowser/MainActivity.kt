@@ -110,7 +110,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var suggestionsAdapter: SuggestionsAdapter? = null
+    private var suggestionThread: Thread? = null
+
     private fun setupUrlBar() {
+        suggestionsAdapter = SuggestionsAdapter { suggestion ->
+            when (suggestion.type) {
+                SuggestionType.SEARCH -> navigateTo(Prefs.searchUrl(suggestion.text))
+                else -> navigateTo(suggestion.url)
+            }
+        }
+        b.suggestionsList.layoutManager = LinearLayoutManager(this)
+        b.suggestionsList.adapter = suggestionsAdapter
+
         b.urlField.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO) {
                 navigateTo(UrlUtils.normalize(v.text.toString()))
@@ -122,9 +134,11 @@ class MainActivity : AppCompatActivity() {
                 b.urlField.selectAll()
                 b.btnClear.visibility = View.VISIBLE
                 expandUrlBar()
+                showSuggestions(b.urlField.text.toString())
             } else {
                 b.btnClear.visibility = View.GONE
                 collapseUrlBar()
+                hideSuggestions()
             }
         }
         b.urlField.addTextChangedListener(object : TextWatcher {
@@ -132,6 +146,7 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 b.btnClear.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+                showSuggestions(s?.toString() ?: "")
             }
         })
         b.btnClear.setOnClickListener {
@@ -195,6 +210,102 @@ class MainActivity : AppCompatActivity() {
             }
             start()
         }
+    }
+
+    private fun showSuggestions(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) {
+            val historyItems = HistoryStore.all().take(8)
+            if (historyItems.isEmpty()) {
+                hideSuggestions()
+                return
+            }
+            val list = historyItems.map { h ->
+                Suggestion(h.title.ifEmpty { h.url }, h.url, SuggestionType.HISTORY)
+            }
+            suggestionsAdapter?.update(list)
+            b.suggestionsContainer.visibility = View.VISIBLE
+            b.suggestionsContainer.alpha = 0f
+            b.suggestionsContainer.animate().alpha(1f).setDuration(150).start()
+            return
+        }
+
+        val combined = mutableListOf<Suggestion>()
+
+        for (h in HistoryStore.all()) {
+            if (h.url.contains(q, ignoreCase = true) || h.title.contains(q, ignoreCase = true)) {
+                combined.add(Suggestion(h.title.ifEmpty { h.url }, h.url, SuggestionType.HISTORY))
+            }
+            if (combined.size >= 5) break
+        }
+        for (bm in BookmarkStore.all()) {
+            if (bm.url.contains(q, ignoreCase = true) || bm.title.contains(q, ignoreCase = true)) {
+                combined.add(Suggestion(bm.title, bm.url, SuggestionType.BOOKMARK))
+            }
+            if (combined.size >= 8) break
+        }
+
+        suggestionsAdapter?.update(combined)
+        b.suggestionsContainer.visibility = View.VISIBLE
+        b.suggestionsContainer.alpha = 0f
+        b.suggestionsContainer.animate().alpha(1f).setDuration(150).start()
+
+        suggestionThread?.interrupt()
+        suggestionThread = Thread {
+            try {
+                val url = Prefs.searchSuggestionUrl(q)
+                val conn = java.net.URL(url).openConnection()
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                val raw = conn.getInputStream().bufferedReader().use { it.readText() }
+                val searchSuggestions = parseSimpleSuggestions(raw)
+                runOnUiThread {
+                    if (b.urlField.hasFocus() && b.urlField.text.toString().trim() == q) {
+                        val current = combined.toMutableList()
+                        for (s in searchSuggestions) {
+                            if (current.none { it.text.equals(s, ignoreCase = true) }) {
+                                current.add(Suggestion(s, Prefs.searchUrl(s), SuggestionType.SEARCH))
+                            }
+                            if (current.size >= 10) break
+                        }
+                        suggestionsAdapter?.update(current)
+                    }
+                }
+            } catch (e: Exception) {
+            }
+        }.also { it.start() }
+    }
+
+    private fun hideSuggestions() {
+        suggestionThread?.interrupt()
+        b.suggestionsContainer.animate()
+            .alpha(0f)
+            .setDuration(100)
+            .withEndAction { b.suggestionsContainer.visibility = View.GONE }
+            .start()
+        suggestionsAdapter?.clear()
+    }
+
+    private fun parseSimpleSuggestions(raw: String): List<String> {
+        val list = mutableListOf<String>()
+        try {
+            val arr = org.json.JSONArray(raw)
+            if (arr.length() > 1) {
+                val suggestions = arr.optJSONArray(1)
+                if (suggestions != null) {
+                    for (i in 0 until suggestions.length()) {
+                        val s = suggestions.optString(i)
+                        if (s.isNotEmpty()) list.add(s)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            val pattern = Regex("""\["([^"]+)"\]""")
+            for (m in pattern.findAll(raw)) {
+                if (m.groupValues[1].isNotEmpty()) list.add(m.groupValues[1])
+            }
+        }
+        return list.distinct().take(5)
     }
 
     private fun setupNav() {
