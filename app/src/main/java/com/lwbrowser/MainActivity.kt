@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         setupUrlBar()
         setupNav()
         setupMenu()
+        updateExtButton()
 
         b.root.requestFocus()
         b.urlField.clearFocus()
@@ -329,6 +330,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupMenu() {
         b.btnMenu.setOnClickListener { showOverflowMenu() }
+        b.btnExt.setOnClickListener { showExtensionPopupPicker() }
     }
 
     private fun showOverflowMenu() {
@@ -375,7 +377,7 @@ class MainActivity : AppCompatActivity() {
 
         view.findViewById<View>(R.id.rowExtensions).setOnClickListener {
             sheet.dismiss()
-            startActivity(Intent(this, SettingsActivity::class.java))
+            showExtensionPopupPicker()
         }
 
         view.findViewById<View>(R.id.rowReader).setOnClickListener { sheet.dismiss(); toggleReaderMode() }
@@ -410,6 +412,68 @@ class MainActivity : AppCompatActivity() {
             w.decorView.alpha = 0f
             w.decorView.animate().alpha(1f).setDuration(200).start()
         }
+    }
+
+    private fun showExtensionPopupPicker() {
+        val exts = ExtensionManager.all().filter { it.enabled && it.browserAction["popup"]?.isNotEmpty() == true }
+        if (exts.isEmpty()) {
+            android.widget.Toast.makeText(this, "No extensions with popups installed. Install an extension first.", android.widget.Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, SettingsActivity::class.java))
+            return
+        }
+        if (exts.size == 1) {
+            showExtensionPopup(exts[0])
+            return
+        }
+        val names = exts.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Extensions")
+            .setItems(names) { _, which -> showExtensionPopup(exts[which]) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showExtensionPopup(ext: com.lwbrowser.ext.Extension) {
+        val popupPath = ext.browserAction["popup"] ?: return
+        val html = ExtensionManager.loadFile(ext.id, popupPath) ?: run {
+            android.widget.Toast.makeText(this, "Could not load popup: $popupPath", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val shim = ExtensionManager.buildChromeApiShim(ext.id)
+        val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
+
+        val popupWv = WebView(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.allowFileAccess = true
+            settings.allowContentAccess = true
+            settings.loadWithOverviewMode = true
+            settings.useWideViewPort = false
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    view?.evaluateJavascript(shim, null)
+                }
+            }
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(popupWv)
+            .setOnDismissListener { popupWv.destroy() }
+            .create()
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            val params = dialog.window?.attributes
+            params?.width = LinearLayout.LayoutParams.WRAP_CONTENT
+            params?.height = LinearLayout.LayoutParams.WRAP_CONTENT
+            params?.gravity = android.view.Gravity.CENTER or android.view.Gravity.TOP
+            dialog.window?.attributes = params
+        }
+        dialog.show()
+
+        popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
     }
 
     private fun navigateTo(url: String) {
@@ -1227,6 +1291,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         tabs.all.forEach { if (it.webViewReady()) it.webView.onResume() }
+        updateExtButton()
         if (intent?.action != ACTION_FOCUS_SEARCH) {
             b.urlField.clearFocus()
             b.root.requestFocus()
@@ -1234,6 +1299,12 @@ class MainActivity : AppCompatActivity() {
             imm.hideSoftInputFromWindow(b.urlField.windowToken, 0)
             hideSuggestions()
         }
+    }
+
+    private fun updateExtButton() {
+        ExtensionManager.reload()
+        val hasPopup = ExtensionManager.all().any { it.enabled && it.browserAction["popup"]?.isNotEmpty() == true }
+        b.btnExt.visibility = if (hasPopup) View.VISIBLE else View.GONE
     }
 
     override fun onDestroy() {

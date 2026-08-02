@@ -18,7 +18,7 @@ A lightweight, privacy-focused Android browser built on Chromium (Android WebVie
 - **Find in page** — injected JS find bar
 - **Dark mode** — system or forced
 - **Downloads** — in-app download manager
-- **Extension support** — Firefox .xpi content-script injection
+- **Extension support** — Chrome MV3 extension loading with popup support
 - **Home-screen widget** — quick search widget
 
 ## Permissions
