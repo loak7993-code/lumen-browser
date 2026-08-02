@@ -492,11 +492,10 @@ class MainActivity : AppCompatActivity() {
         tab.webView.loadUrl(popupFileUrl)
         updateTabCount()
 
-        // Inject the chrome.* API shim into the tab's WebView so the popup's
-        // JS can call chrome.storage.*, chrome.tabs.*, etc. Inject in both
-        // onPageStarted (before page scripts run) and onPageFinished (fallback).
-        // Also inject a CSS override that forces the popup to fill the phone
-        // width — the popup's own CSS may have fixed widths or max-widths.
+        // Inject the chrome.* API shim + CSS fullwidth override into the tab's
+        // WebView. We DON'T replace the webViewClient (that would break the
+        // progress bar and loading spinner — the BrowserWebViewClient handles
+        // those). Instead, inject via postDelayed after the page loads.
         val wv = tab.webView
         val cssOverride = """
             (function(){
@@ -506,28 +505,15 @@ class MainActivity : AppCompatActivity() {
                 (document.head||document.documentElement).appendChild(s);
             })();
         """.trimIndent()
-        wv.webViewClient = object : WebViewClient() {
-            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                super.onPageStarted(view, url, favicon)
-                view?.evaluateJavascript(shim, null)
-                view?.evaluateJavascript(cssOverride, null)
-            }
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                view?.evaluateJavascript(shim, null)
-                view?.evaluateJavascript(cssOverride, null)
-            }
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url?.toString() ?: return false
-                // If the popup tries to navigate somewhere (e.g. a link click),
-                // open it in a new tab instead of replacing the popup.
-                if (!url.startsWith("file://")) {
-                    openInNewTab(url)
-                    return true
-                }
-                return false
-            }
-        }
+        // Inject at 300ms (after page scripts start) and 1500ms (after page finishes).
+        wv.postDelayed({
+            wv.evaluateJavascript(shim, null)
+            wv.evaluateJavascript(cssOverride, null)
+        }, 300)
+        wv.postDelayed({
+            wv.evaluateJavascript(shim, null)
+            wv.evaluateJavascript(cssOverride, null)
+        }, 1500)
     }
 
     private fun navigateTo(url: String) {
