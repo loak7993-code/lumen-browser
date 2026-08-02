@@ -7,7 +7,7 @@ object Prefs {
     private const val FILE = "lwbrowser_prefs"
     private lateinit var sp: SharedPreferences
 
-    const val DEFAULT_START_PAGE = "file:///android_asset/search.html"
+    const val DEFAULT_START_PAGE = "https://duckduckgo.com"
 
     var startPage: String
         get() = sp.getString("start_page", DEFAULT_START_PAGE) ?: DEFAULT_START_PAGE
