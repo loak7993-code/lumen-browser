@@ -39,7 +39,7 @@ class LumenSearchEngine(
     fun fetchSuggestions(query: String) {
         thread {
             val json = try {
-                val raw = fetchText("https://duckduckgo.com/ac/?q=" + Uri.encode(query) + "&type=list")
+                val raw = fetchText(Prefs.searchSuggestionUrl(query))
                 val list = parseSuggestionList(raw)
                 val sw = StringWriter()
                 JsonWriter(sw).use { w ->
@@ -68,6 +68,11 @@ class LumenSearchEngine(
     @JavascriptInterface
     fun openUrl(url: String) {
         urlCallback(url)
+    }
+
+    @JavascriptInterface
+    fun searchQuery(query: String) {
+        urlCallback(Prefs.searchUrl(query))
     }
 
     @JavascriptInterface

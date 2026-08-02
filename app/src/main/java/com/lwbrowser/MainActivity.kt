@@ -193,6 +193,24 @@ class MainActivity : AppCompatActivity() {
             sheet.dismiss()
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        view.findViewById<View>(R.id.rowReader).setOnClickListener { sheet.dismiss(); toggleReaderMode() }
+        view.findViewById<View>(R.id.rowScreenshot).setOnClickListener { sheet.dismiss(); captureScreenshot() }
+
+        val swNight = view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.swNightMode)
+        swNight.isChecked = Prefs.nightMode
+        swNight.setOnCheckedChangeListener { _, v ->
+            Prefs.nightMode = v
+            injectNightMode()
+            sheet.dismiss()
+        }
+
+        view.findViewById<TextView>(R.id.txtZoom).text = "${Prefs.pageZoom}%"
+        view.findViewById<View>(R.id.rowZoom).setOnClickListener {
+            sheet.dismiss()
+            showZoomDialog()
+        }
+
         view.findViewById<View>(R.id.gridNewTab).setOnClickListener { sheet.dismiss(); openInNewTab(Prefs.startPage) }
         view.findViewById<View>(R.id.gridTabs).setOnClickListener { sheet.dismiss(); showTabsDialog() }
         view.findViewById<View>(R.id.gridHistory).setOnClickListener { sheet.dismiss(); showHistory() }
@@ -264,6 +282,119 @@ class MainActivity : AppCompatActivity() {
 
     private fun injectAntiFingerprint(wv: WebView) {
         wv.evaluateJavascript(AntiFingerprint.js(), null)
+    }
+
+    private fun injectNightMode() {
+        val wv = currentWebView() ?: return
+        val url = wv.url ?: return
+        if (url.startsWith("file:///android_asset/")) return
+        if (Prefs.nightMode) {
+            val js = """
+                (function(){
+                    if(document.getElementById('__lumen_night'))return;
+                    var s=document.createElement('style');
+                    s.id='__lumen_night';
+                    s.textContent='html{filter:invert(1) hue-rotate(180deg) !important;}img,video,picture,[style*="background-image"]{filter:invert(1) hue-rotate(180deg) !important;}';
+                    (document.head||document.documentElement).appendChild(s);
+                })();
+            """.trimIndent()
+            wv.evaluateJavascript(js, null)
+        } else {
+            wv.evaluateJavascript("(function(){var e=document.getElementById('__lumen_night');if(e)e.remove();})();", null)
+        }
+    }
+
+    private fun toggleReaderMode() {
+        val wv = currentWebView() ?: return
+        val url = wv.url ?: return
+        if (url.startsWith("file:///android_asset/reader.html")) {
+            wv.goBack()
+            return
+        }
+        wv.evaluateJavascript("""
+            (function(){
+                var title=document.title||'Untitled';
+                var meta='';
+                var author=document.querySelector('meta[name="author"]')||document.querySelector('[rel="author"]');
+                if(author)meta=author.getAttribute('content')||author.getAttribute('href')||'';
+                var date=document.querySelector('meta[name="date"]')||document.querySelector('meta[property="article:published_time"]');
+                if(date)meta+=(meta?' · ':'')+(date.getAttribute('content')||'');
+                var article=document.querySelector('article')||document.querySelector('[role="main"]')||document.querySelector('.post-content')||document.querySelector('.article-content')||document.querySelector('.entry-content')||document.querySelector('main')||document.body;
+                var clone=article.cloneNode(true);
+                clone.querySelectorAll('script,style,nav,footer,header,aside,.ad,.ads,.social-share,.comments,.related,.sidebar,iframe,noscript').forEach(function(e){e.remove();});
+                var content=clone.innerHTML;
+                window.LumenReaderCallback.extracted(title,meta,content);
+            })();
+        """.trimIndent(), null)
+    }
+
+    private fun onReaderExtracted(title: String, meta: String, content: String) {
+        val escapedTitle = title.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+        val escapedMeta = meta.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+        val escapedContent = content.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+        val wv = currentWebView() ?: return
+        wv.loadUrl("file:///android_asset/reader.html")
+        wv.postDelayed({
+            wv.evaluateJavascript(
+                "document.getElementById('readerTitle').textContent='$escapedTitle';" +
+                "document.getElementById('readerMeta').textContent='$escapedMeta';" +
+                "document.getElementById('readerContent').innerHTML='$escapedContent';",
+                null
+            )
+        }, 500)
+    }
+
+    private fun captureScreenshot() {
+        val wv = currentWebView() ?: return
+        wv.evaluateJavascript("""
+            (function(){
+                var h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);
+                var w=Math.max(document.body.scrollWidth,document.documentElement.scrollWidth);
+                window.LumenReaderCallback.screenshotSize(w,h);
+            })();
+        """.trimIndent(), null)
+    }
+
+    private fun takeScreenshot(width: Int, height: Int) {
+        val wv = currentWebView() ?: return
+        val bitmap = Bitmap.createBitmap(wv.width, wv.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        wv.draw(canvas)
+        try {
+            val dir = java.io.File(getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES), "Lumen")
+            dir.mkdirs()
+            val fileName = "Lumen_Screenshot_${System.currentTimeMillis()}.png"
+            val file = java.io.File(dir, fileName)
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            toast(getString(R.string.saved_screenshot) + ": " + fileName)
+        } catch (e: Exception) {
+            toast(getString(R.string.permission_denied))
+        }
+    }
+
+    private fun showZoomDialog() {
+        val items = arrayOf("50%", "75%", "100%", "125%", "150%", "200%")
+        val values = intArrayOf(50, 75, 100, 125, 150, 200)
+        val current = Prefs.pageZoom
+        AlertDialog.Builder(this)
+            .setTitle(R.string.settings_zoom)
+            .setSingleChoiceItems(items, values.indexOf(current)) { dlg, which ->
+                Prefs.pageZoom = values[which]
+                applyZoom()
+                dlg.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun applyZoom() {
+        val wv = currentWebView() ?: return
+        wv.settings.textZoom = Prefs.pageZoom
+    }
+
+    private fun applyFontSize() {
+        val wv = currentWebView() ?: return
+        wv.settings.textZoom = Prefs.fontSize
     }
 
     private fun injectContentScripts(wv: WebView, url: String, runAt: String) {
@@ -384,6 +515,16 @@ class MainActivity : AppCompatActivity() {
             ),
             "LumenBridge"
         )
+        wv.addJavascriptInterface(object {
+            @android.webkit.JavascriptInterface
+            fun extracted(title: String, meta: String, content: String) {
+                runOnUiThread { onReaderExtracted(title, meta, content) }
+            }
+            @android.webkit.JavascriptInterface
+            fun screenshotSize(w: Int, h: Int) {
+                runOnUiThread { takeScreenshot(w, h) }
+            }
+        }, "LumenReaderCallback")
         return wv
     }
 
@@ -518,8 +659,10 @@ class MainActivity : AppCompatActivity() {
             updateProgress(100)
             b.swipe.isRefreshing = false
             if (view != null) {
+                view.settings.textZoom = Prefs.pageZoom
                 if (Prefs.blockAds) injectCosmeticFilters(view)
                 if (Prefs.blockWebRTC) injectWebRTCBlock(view)
+                if (Prefs.nightMode) injectNightMode()
                 if (url != null) {
                     injectContentScripts(view, url, "document_end")
                     injectContentScripts(view, url, "document_idle")

@@ -44,6 +44,19 @@
                 style="@style/SettingsSectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/settings_search_engine" />
+
+            <Spinner
+                android:id="@+id/spSearchEngine"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="@string/section_display" />
 
@@ -52,6 +65,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_dark_mode" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/swNightMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_night_mode" />
 
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swDesktop"

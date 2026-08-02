@@ -39,6 +39,7 @@ class SettingsActivity : AppCompatActivity() {
             if (Prefs.startPage == Prefs.DEFAULT_START_PAGE) "Dashboard" else Prefs.startPage
         )
         b.swDark.isChecked = Prefs.forceDark
+        b.swNightMode.isChecked = Prefs.nightMode
         b.swDesktop.isChecked = Prefs.desktopMode
         b.swImages.isChecked = Prefs.loadImages
         b.swJs.isChecked = Prefs.javaScriptEnabled
@@ -47,6 +48,19 @@ class SettingsActivity : AppCompatActivity() {
         b.swBlockWebRTC.isChecked = Prefs.blockWebRTC
         b.swHistory.isChecked = Prefs.saveHistory
         updateStats()
+
+        val engines = arrayOf("Startpage", "DuckDuckGo", "Google", "Bing")
+        val engineKeys = arrayOf("startpage", "duckduckgo", "google", "bing")
+        val adapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_item, engines)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        b.spSearchEngine.adapter = adapter
+        b.spSearchEngine.setSelection(engineKeys.indexOf(Prefs.searchEngine))
+        b.spSearchEngine.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                Prefs.searchEngine = engineKeys[pos]
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
 
         b.startPageInput.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
@@ -62,6 +76,9 @@ class SettingsActivity : AppCompatActivity() {
         b.swDark.setOnCheckedChangeListener { _, v ->
             Prefs.forceDark = v
             BrowserApp.applyDarkMode(v)
+        }
+        b.swNightMode.setOnCheckedChangeListener { _, v ->
+            Prefs.nightMode = v
         }
         b.swDesktop.setOnCheckedChangeListener { _, v ->
             Prefs.desktopMode = v

@@ -22,7 +22,7 @@ object UrlUtils {
     }
 
     fun searchEngine(query: String): String {
-        return "https://www.startpage.com/sp/search?query=" + URLEncoder.encode(query, "UTF-8").replace("+", "%20")
+        return Prefs.searchUrl(query)
     }
 
     fun host(url: String?): String {

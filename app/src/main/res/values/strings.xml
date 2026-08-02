@@ -9,6 +9,7 @@
     <string name="action_stop">Stop</string>
     <string name="action_home">Home</string>
     <string name="action_new_tab">New tab</string>
+    <string name="action_new_incognito_tab">New incognito tab</string>
     <string name="action_close_tab">Close tab</string>
     <string name="action_tabs">Tabs</string>
     <string name="action_bookmark">Bookmark this page</string>
@@ -24,8 +25,15 @@
     <string name="action_settings">Settings</string>
     <string name="action_exit">Exit</string>
     <string name="action_open_external">Open in external browser</string>
+    <string name="action_reader_mode">Reader mode</string>
+    <string name="action_screenshot">Screenshot</string>
+    <string name="action_zoom_in">Zoom in</string>
+    <string name="action_zoom_out">Zoom out</string>
+    <string name="action_zoom_reset">Reset zoom</string>
+    <string name="action_night_mode">Night mode</string>
 
     <string name="tab_new">New tab</string>
+    <string name="tab_incognito">Incognito</string>
     <string name="find_hint">Find</string>
     <string name="empty_bookmarks">No bookmarks yet</string>
     <string name="empty_history">No history yet</string>
@@ -39,6 +47,7 @@
 
     <string name="settings_start_page">Start page</string>
     <string name="settings_start_page_summary">URL opened on a new tab</string>
+    <string name="settings_search_engine">Search engine</string>
     <string name="settings_block_ads">Block ads</string>
     <string name="settings_block_trackers">Block trackers</string>
     <string name="settings_block_webrtc">Disable WebRTC (prevent IP leak)</string>
@@ -48,6 +57,9 @@
     <string name="settings_load_images">Load images</string>
     <string name="settings_save_history">Save history</string>
     <string name="settings_dark_mode">Force dark mode</string>
+    <string name="settings_zoom">Page zoom</string>
+    <string name="settings_font_size">Text size</string>
+    <string name="settings_night_mode">Night mode (invert colors)</string>
 
     <string name="section_display">Display</string>
     <string name="section_privacy">Privacy &amp; data</string>
@@ -63,4 +75,8 @@
     <string name="install_failed">Installation failed. Is this a valid Chrome extension?</string>
     <string name="install_success">Extension installed</string>
     <string name="zero">0</string>
+
+    <string name="incognito_warning">Incognito mode: No history, cookies, or data saved</string>
+    <string name="saved_screenshot">Screenshot saved</string>
+    <string name="reader_title">Reader Mode</string>
 </resources>
