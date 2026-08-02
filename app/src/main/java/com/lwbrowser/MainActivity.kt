@@ -142,6 +142,9 @@ class MainActivity : AppCompatActivity() {
             val tab = tabs.current
             if (tab?.isLoading == true) tab.webView.stopLoading() else tab?.webView?.reload()
         }
+        b.btnHome.setOnClickListener {
+            currentWebView()?.loadUrl(Prefs.startPage)
+        }
     }
 
     private fun setupMenu() {
