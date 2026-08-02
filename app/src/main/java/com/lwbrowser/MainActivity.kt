@@ -484,7 +484,9 @@ class MainActivity : AppCompatActivity() {
         val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
 
         val density = resources.displayMetrics.density
-        val popupHeight = (640 * density).toInt()
+        val displayHeight = resources.displayMetrics.heightPixels
+        // Default to 90% of screen height so the popup is big, not a tiny strip.
+        val popupHeight = (displayHeight * 0.9).toInt()
 
         val popupWv = WebView(this).apply {
             settings.javaScriptEnabled = true
@@ -543,10 +545,9 @@ class MainActivity : AppCompatActivity() {
         binding.extPopupTitle.text = ext.name
         binding.extPopupClose.setOnClickListener { sheet.dismiss() }
         // Fullscreen toggle: expand the sheet to fill the whole screen, or
-        // shrink back to the normal peek height. The drag handle is hidden in
-        // fullscreen so the user can't accidentally drag it closed.
+        // shrink back to the normal peek height. Drag is disabled in fullscreen
+        // so the user can't accidentally close it.
         var isFullscreen = false
-        val displayHeight = resources.displayMetrics.heightPixels
         binding.extPopupFullscreen.setOnClickListener {
             isFullscreen = !isFullscreen
             if (isFullscreen) {
@@ -561,6 +562,13 @@ class MainActivity : AppCompatActivity() {
         }
         binding.extPopupWebContainer.addView(popupWv)
         sheet.setContentView(binding.root)
+        // Give the sheet root an explicit height so the WebView fills it
+        // (match_parent in a BottomSheetDialog wraps to content height, which
+        // is too small — the WebView ends up a tiny strip).
+        binding.root.layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            popupHeight
+        )
         sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
         sheet.behavior.peekHeight = popupHeight
         sheet.behavior.skipCollapsed = true
