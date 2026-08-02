@@ -10,7 +10,10 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import kotlin.concurrent.thread
 
-class LumenSearchEngine(private val callback: (String, String) -> Unit) {
+class LumenSearchEngine(
+    private val callback: (String, String) -> Unit,
+    private val urlCallback: (String) -> Unit = {}
+) {
 
     enum class Type { WEB, IMAGES, VIDEOS, NEWS }
 
@@ -60,6 +63,28 @@ class LumenSearchEngine(private val callback: (String, String) -> Unit) {
     fun getProtectionStats(): String {
         val (ads, trackers, cosmetic) = AdBlocker.stats()
         return "Protected · ${ads + trackers} blocked"
+    }
+
+    @JavascriptInterface
+    fun openUrl(url: String) {
+        urlCallback(url)
+    }
+
+    @JavascriptInterface
+    fun getHistory(): String {
+        val items = HistoryStore.all()
+        val sw = StringWriter()
+        JsonWriter(sw).use { w ->
+            w.beginArray()
+            for (item in items) {
+                w.beginObject()
+                w.name("title").value(item.title)
+                w.name("url").value(item.url)
+                w.endObject()
+            }
+            w.endArray()
+        }
+        return sw.toString()
     }
 
     private data class Result(

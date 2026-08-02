@@ -389,13 +389,16 @@ class MainActivity : AppCompatActivity() {
         wv.setDownloadListener(BrowserDownloadListener())
         wv.setOnLongClickListener { handleLongClick(); true }
         wv.addJavascriptInterface(
-            LumenSearchEngine { kind, json ->
-                runOnUiThread {
-                    val escaped = json.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-                    val fn = if (kind == "suggestions") "window.__lumenSuggestions" else "window.__lumenResults"
-                    wv.evaluateJavascript("$fn('$escaped')", null)
-                }
-            },
+            LumenSearchEngine(
+                { kind, json ->
+                    runOnUiThread {
+                        val escaped = json.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+                        val fn = if (kind == "suggestions") "window.__lumenSuggestions" else "window.__lumenResults"
+                        wv.evaluateJavascript("$fn('$escaped')", null)
+                    }
+                },
+                { url -> runOnUiThread { navigateTo(url) } }
+            ),
             "LumenBridge"
         )
         return wv
@@ -445,7 +448,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun displayUrl(url: String?): String {
         if (url.isNullOrEmpty()) return ""
-        if (url.startsWith("file:///android_asset/search.html")) return ""
+        if (url.startsWith("file:///android_asset/")) return ""
         return url
     }
 

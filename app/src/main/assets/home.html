@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Lumen — New Tab</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f5f6f8;
+  --surface-hover: #ebedf0;
+  --text: #111418;
+  --secondary: #5a6068;
+  --primary: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --divider: #e3e5e8;
+  --secure: #16a34a;
+  --shadow: 0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.10);
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121316;
+    --surface: #1e2024;
+    --surface-hover: #2c2f34;
+    --text: #e8eaed;
+    --secondary: #9aa0a6;
+    --divider: #2c2f34;
+    --shadow: 0 2px 8px rgba(0,0,0,.3);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.4);
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Roboto", "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+.dashboard {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+}
+
+/* Top bar */
+.top-bar {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+}
+.shield-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(22,163,74,.1);
+  color: var(--secure);
+  font-size: 12px;
+  font-weight: 600;
+}
+.shield-badge svg { width: 14px; height: 14px; }
+.time-display {
+  font-size: 13px;
+  color: var(--secondary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hero */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 620px;
+  padding: 20px 0;
+}
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.logo-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(59,130,246,.30);
+}
+.logo-icon svg { width: 32px; height: 32px; }
+.brand-name {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.brand-name span { color: var(--primary); }
+
+/* Search */
+.search-wrap {
+  width: 100%;
+  position: relative;
+  margin-top: 32px;
+}
+.search-input {
+  width: 100%;
+  height: 56px;
+  border: 1px solid var(--divider);
+  border-radius: 28px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 56px 0 22px;
+  font-size: 16px;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+  background: var(--bg);
+}
+.search-input::-webkit-search-cancel-button { display: none; }
+.search-icon {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  color: var(--secondary);
+  pointer-events: none;
+}
+.suggestions {
+  display: none;
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: 16px;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.suggestions.visible { display: block; }
+.suggestion {
+  padding: 12px 22px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.suggestion:active { background: var(--surface-hover); }
+.suggestion svg { width: 16px; height: 16px; color: var(--secondary); flex-shrink: 0; }
+
+/* Shortcuts */
+.section {
+  width: 100%;
+  max-width: 620px;
+  margin-top: 36px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.section-btn {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.section-btn:active { background: var(--surface); }
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (min-width: 500px) {
+  .shortcut-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (min-width: 640px) {
+  .shortcut-grid { grid-template-columns: repeat(6, 1fr); }
+}
+.shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background .12s, transform .12s;
+  text-decoration: none;
+  color: var(--text);
+  position: relative;
+}
+.shortcut:active {
+  background: var(--surface-hover);
+  transform: scale(0.96);
+}
+.shortcut-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.shortcut-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shortcut-label {
+  font-size: 11px;
+  color: var(--text);
+  text-align: center;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shortcut-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-hover);
+  border: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--secondary);
+  cursor: pointer;
+}
+.shortcut.editing .shortcut-remove { display: flex; }
+.shortcut-remove:active { background: var(--divider); }
+
+.add-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px dashed var(--divider);
+  cursor: pointer;
+  transition: background .12s;
+}
+.add-shortcut:active { background: var(--surface); }
+.add-shortcut-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--secondary);
+}
+.add-shortcut-label {
+  font-size: 11px;
+  color: var(--secondary);
+}
+
+/* Recent */
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--text);
+  transition: background .12s;
+}
+.recent-item:active { background: var(--surface-hover); }
+.recent-favicon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.recent-favicon img { width: 20px; height: 20px; border-radius: 4px; }
+.recent-info { flex: 1; min-width: 0; }
+.recent-title {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-url {
+  font-size: 11px;
+  color: var(--secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Add dialog */
+.dialog-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.dialog-overlay.visible { display: flex; }
+.dialog {
+  width: 100%;
+  max-width: 340px;
+  background: var(--bg);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.dialog input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 14px;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 12px;
+  -webkit-appearance: none;
+}
+.dialog input:focus { border-color: var(--primary); }
+.dialog-colors {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.color-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: border-color .12s;
+}
+.color-dot.selected { border-color: var(--text); }
+.dialog-buttons { display: flex; gap: 8px; }
+.dialog-btn {
+  flex: 1;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dialog-btn.cancel { background: var(--surface); color: var(--text); }
+.dialog-btn.cancel:active { background: var(--surface-hover); }
+.dialog-btn.save { background: var(--primary); color: #fff; }
+.dialog-btn.save:active { background: var(--primary-dark); }
+
+/* Footer */
+.footer {
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+  padding: 24px 0 16px;
+  font-size: 11px;
+  color: var(--secondary);
+}
+
+/* Spinner for suggestions */
+.suggest-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--divider);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <div class="top-bar">
+    <div class="shield-badge" id="shieldBadge">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+      <span id="shieldText">Protected</span>
+    </div>
+    <div class="time-display" id="timeDisplay"></div>
+  </div>
+
+  <div class="hero">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="#fff" stroke-width="2"/>
+          <path d="M2 12h20M12 2c3 3 4.5 6 4.5 10s-1.5 7-4.5 10c-3-3-4.5-6-4.5-10s1.5-7 4.5-10z" stroke="#fff" stroke-width="1.5"/>
+          <path d="M13 5l-5 8h4l-2 6 6-9h-3z" fill="#ffd600" stroke="#ffd600" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="brand-name">Lumen</div>
+    </div>
+
+    <div class="search-wrap">
+      <input class="search-input" type="search" id="searchInput" placeholder="Search DuckDuckGo or type URL" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>
+      <div class="suggestions" id="suggestionsBox"></div>
+    </div>
+  </div>
+
+  <div class="section" id="shortcutsSection">
+    <div class="section-header">
+      <div class="section-title">Shortcuts</div>
+      <button class="section-btn" id="editBtn">Edit</button>
+    </div>
+    <div class="shortcut-grid" id="shortcutGrid"></div>
+  </div>
+
+  <div class="section" id="recentSection" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Recently Visited</div>
+    </div>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+
+  <div class="footer">Lumen Browser · Private by design</div>
+</div>
+
+<!-- Add shortcut dialog -->
+<div class="dialog-overlay" id="addDialog">
+  <div class="dialog">
+    <div class="dialog-title" id="dialogTitle">Add Shortcut</div>
+    <input type="text" id="shortcutName" placeholder="Name" maxlength="20">
+    <input type="text" id="shortcutUrl" placeholder="https://example.com" autocapitalize="off" spellcheck="false">
+    <div class="dialog-colors" id="colorPicker">
+      <div class="color-dot selected" style="background:#3b82f6" data-color="#3b82f6"></div>
+      <div class="color-dot" style="background:#ef4444" data-color="#ef4444"></div>
+      <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b"></div>
+      <div class="color-dot" style="background:#16a34a" data-color="#16a34a"></div>
+      <div class="color-dot" style="background:#8b5cf6" data-color="#8b5cf6"></div>
+      <div class="color-dot" style="background:#ec4899" data-color="#ec4899"></div>
+      <div class="color-dot" style="background:#06b6d4" data-color="#06b6d4"></div>
+      <div class="color-dot" style="background:#64748b" data-color="#64748b"></div>
+    </div>
+    <div class="dialog-buttons">
+      <button class="dialog-btn cancel" id="dialogCancel">Cancel</button>
+      <button class="dialog-btn save" id="dialogSave">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var DEFAULT_SHORTCUTS = [
+    {name:"YouTube",url:"https://youtube.com",color:"#ef4444"},
+    {name:"Wikipedia",url:"https://wikipedia.org",color:"#64748b"},
+    {name:"Reddit",url:"https://reddit.com",color:"#f59e0b"},
+    {name:"GitHub",url:"https://github.com",color:"#111418"},
+    {name:"Amazon",url:"https://amazon.com",color:"#f59e0b"},
+    {name:"News",url:"https://news.ycombinator.com",color:"#f97316"},
+  ];
+  var SHORTCUTS_KEY = "lumen_shortcuts";
+  var editing = false;
+  var selectedColor = "#3b82f6";
+  var editingIndex = -1;
+
+  function getShortcuts() {
+    try {
+      var saved = localStorage.getItem(SHORTCUTS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return DEFAULT_SHORTCUTS.slice();
+  }
+
+  function saveShortcuts(list) {
+    try { localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(list)); } catch(e) {}
+  }
+
+  function getLetter(name) {
+    return (name || "?")[0].toUpperCase();
+  }
+
+  function getHost(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch(e) { return url; }
+  }
+
+  function getFavicon(url) {
+    var host = getHost(url);
+    return "https://icons.duckduckgo.com/ip3/" + host + ".ico";
+  }
+
+  function renderShortcuts() {
+    var list = getShortcuts();
+    var html = "";
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i];
+      var letter = getLetter(s.name);
+      var favicon = getFavicon(s.url);
+      var safeName = s.name.replace(/'/g, "&#39;").replace(/</g, "<");
+      var safeUrl = s.url.replace(/'/g, "&#39;").replace(/"/g, """);
+      html += '<div class="shortcut' + (editing ? " editing" : "") + '" onclick="window.openUrl(\'' + safeUrl + '\')">' +
+        '<button class="shortcut-remove" onclick="event.stopPropagation();window.removeShortcut(' + i + ')">&#10005</button>' +
+        '<div class="shortcut-icon" style="background:' + (s.color || "#3b82f6") + '">' +
+          '<img src="' + favicon + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="display:flex">' +
+          '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center">' + letter + '</span>' +
+        '</div>' +
+        '<div class="shortcut-label">' + safeName + '</div>' +
+      '</div>';
+    }
+    if (list.length < 12) {
+      html += '<div class="add-shortcut" onclick="window.addShortcut()">' +
+        '<div class="add-shortcut-icon">+</div>' +
+        '<div class="add-shortcut-label">Add</div>' +
+      '</div>';
+    }
+    document.getElementById("shortcutGrid").innerHTML = html;
+  }
+
+  window.openUrl = function(url) {
+    if (editing) return;
+    if (window.LumenBridge && window.LumenBridge.openUrl) {
+      window.LumenBridge.openUrl(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
+  window.removeShortcut = function(idx) {
+    var list = getShortcuts();
+    list.splice(idx, 1);
+    saveShortcuts(list);
+    renderShortcuts();
+  };
+
+  window.addShortcut = function() {
+    editingIndex = -1;
+    document.getElementById("dialogTitle").textContent = "Add Shortcut";
+    document.getElementById("shortcutName").value = "";
+    document.getElementById("shortcutUrl").value = "";
+    selectedColor = "#3b82f6";
+    updateColorPicker();
+    document.getElementById("addDialog").classList.add("visible");
+    setTimeout(function() { document.getElementById("shortcutName").focus(); }, 100);
+  };
+
+  function updateColorPicker() {
+    var dots = document.querySelectorAll(".color-dot");
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].classList.toggle("selected", dots[i].getAttribute("data-color") === selectedColor);
+    }
+  }
+
+  document.querySelectorAll(".color-dot").forEach(function(dot) {
+    dot.addEventListener("click", function() {
+      selectedColor = this.getAttribute("data-color");
+      updateColorPicker();
+    });
+  });
+
+  document.getElementById("dialogCancel").addEventListener("click", function() {
+    document.getElementById("addDialog").classList.remove("visible");
+  });
+
+  document.getElementById("dialogSave").addEventListener("click", function() {
+    var name = document.getElementById("shortcutName").value.trim();
+    var url = document.getElementById("shortcutUrl").value.trim();
+    if (!name || !url) return;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) url = "https://" + url;
+    var list = getShortcuts();
+    if (editingIndex >= 0) {
+      list[editingIndex] = {name:name, url:url, color:selectedColor};
+    } else {
+      list.push({name:name, url:url, color:selectedColor});
+    }
+    saveShortcuts(list);
+    renderShortcuts();
+    document.getElementById("addDialog").classList.remove("visible");
+  });
+
+  document.getElementById("editBtn").addEventListener("click", function() {
+    editing = !editing;
+    this.textContent = editing ? "Done" : "Edit";
+    renderShortcuts();
+  });
+
+  // Search
+  function doSearch(query) {
+    query = query.trim();
+    if (!query) return;
+    if (query.startsWith("http://") || query.startsWith("https://")) {
+      window.openUrl(query);
+    } else if (query.indexOf(" ") >= 0 || !query.match(/^[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}/)) {
+      window.openUrl("https://duckduckgo.com/?q=" + encodeURIComponent(query));
+    } else {
+      window.openUrl("https://" + query);
+    }
+  }
+
+  document.getElementById("searchInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      e.preventDefault();
+      doSearch(this.value);
+    }
+  });
+
+  // Suggestions via DuckDuckGo
+  var suggestTimer = null;
+  document.getElementById("searchInput").addEventListener("input", function() {
+    var q = this.value.trim();
+    if (q.length < 2) {
+      document.getElementById("suggestionsBox").classList.remove("visible");
+      return;
+    }
+    clearTimeout(suggestTimer);
+    suggestTimer = setTimeout(function() {
+      fetchSuggestions(q);
+    }, 200);
+  });
+
+  function fetchSuggestions(q) {
+    try {
+      if (window.LumenBridge && window.LumenBridge.fetchSuggestions) {
+        window.LumenBridge.fetchSuggestions(q);
+      } else {
+        var script = document.createElement("script");
+        script.src = "https://duckduckgo.com/ac/?q=" + encodeURIComponent(q) + "&type=list&callback=__lumenSuggest";
+        document.body.appendChild(script);
+      }
+    } catch(e) {}
+  }
+
+  window.__lumenSuggest = function(data) {
+    if (data && data[1]) {
+      showSuggestions(data[1]);
+    }
+  };
+
+  window.__lumenSuggestions = function(json) {
+    try {
+      var data = JSON.parse(json);
+      showSuggestions(data.suggestions || []);
+    } catch(e) {}
+  };
+
+  function showSuggestions(items) {
+    var box = document.getElementById("suggestionsBox");
+    if (!items || !items.length) {
+      box.classList.remove("visible");
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < items.length && i < 6; i++) {
+      var s = items[i].replace(/'/g, "&#39;").replace(/</g, "<");
+      html += '<div class="suggestion" onclick="window.doSearchSuggest(\'' + s + '\')">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/></svg>' +
+        s + "</div>";
+    }
+    box.innerHTML = html;
+    box.classList.add("visible");
+  }
+
+  window.doSearchSuggest = function(q) {
+    document.getElementById("searchInput").value = q;
+    doSearch(q);
+  };
+
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest(".search-wrap")) {
+      document.getElementById("suggestionsBox").classList.remove("visible");
+    }
+  });
+
+  // Recent visits from Android bridge
+  function loadRecent() {
+    try {
+      if (window.LumenBridge && window.LumenBridge.getHistory) {
+        var json = window.LumenBridge.getHistory();
+        var items = JSON.parse(json);
+        if (items && items.length > 0) {
+          renderRecent(items);
+        }
+      }
+    } catch(e) {}
+  }
+
+  function renderRecent(items) {
+    var recentSection = document.getElementById("recentSection");
+    var recentList = document.getElementById("recentList");
+    var html = "";
+    var shown = 0;
+    for (var i = 0; i < items.length && shown < 5; i++) {
+      var item = items[i];
+      if (!item.url || item.url.indexOf("file:///") === 0) continue;
+      var title = item.title || item.url;
+      var host = getHost(item.url);
+      var favicon = getFavicon(item.url);
+      var letter = getLetter(title);
+      var safeTitle = title.replace(/</g, "<").replace(/'/g, "&#39;");
+      var safeUrl = item.url.replace(/'/g, "&#39;").replace(/"/g, """);
+      var safeHost = host.replace(/</g, "<");
+      html += '<div class="recent-item" onclick="window.openUrl(\'' + safeUrl + '\')">' +
+        '<div class="recent-favicon">' +
+          '<img src="' + favicon + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="display:flex">' +
+          '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center">' + letter + "</span>" +
+        "</div>" +
+        '<div class="recent-info">' +
+          '<div class="recent-title">' + safeTitle + "</div>" +
+          '<div class="recent-url">' + safeHost + "</div>" +
+        "</div>" +
+      "</div>";
+      shown++;
+    }
+    if (shown > 0) {
+      recentList.innerHTML = html;
+      recentSection.style.display = "block";
+    }
+  }
+
+  // Clock
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    m = m < 10 ? "0" + m : m;
+    document.getElementById("timeDisplay").textContent = h + ":" + m + " " + ampm;
+  }
+
+  // Init
+  renderShortcuts();
+  updateClock();
+  setInterval(updateClock, 30000);
+  loadRecent();
+
+  try {
+    if (window.LumenBridge && window.LumenBridge.getProtectionStats) {
+      var stats = window.LumenBridge.getProtectionStats();
+      document.getElementById("shieldText").textContent = stats || "Protected";
+    }
+  } catch(e) {}
+
+  setTimeout(function() {
+    document.getElementById("searchInput").focus();
+  }, 200);
+})();
+</script>
+</body>
+</html>
