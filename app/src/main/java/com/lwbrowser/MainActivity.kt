@@ -61,6 +61,12 @@ class MainActivity : AppCompatActivity() {
         b.swipe.setOnRefreshListener {
             currentWebView()?.reload()
         }
+        b.swipe.setOnTouchListener { _, _ ->
+            if (b.urlField.hasFocus()) {
+                b.urlField.clearFocus()
+            }
+            false
+        }
 
         setupUrlBar()
         setupNav()
@@ -1055,6 +1061,10 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         val wv = currentWebView()
         when {
+            b.urlField.hasFocus() -> {
+                b.urlField.clearFocus()
+                currentWebView()?.requestFocus()
+            }
             findBinding != null -> closeFindBar()
             wv != null && wv.canGoBack() -> wv.goBack()
             tabs.count > 1 -> {
