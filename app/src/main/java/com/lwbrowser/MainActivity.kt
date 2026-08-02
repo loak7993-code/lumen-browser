@@ -475,113 +475,58 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Resolve the popup file on disk. If it exists, we load it directly via
-        // loadUrl() so that ES module imports, CSS <link>, and <script src>
-        // resolve to real files on disk (loadDataWithBaseURL breaks ES modules
-        // and external resources). Fall back to loadDataWithBaseURL only if
-        // the file can't be read.
         val popupFile = File(filesDir, "extensions/${ext.id}/$popupPath")
         if (!popupFile.exists()) {
             android.widget.Toast.makeText(this, "Could not load popup: $popupPath", android.widget.Toast.LENGTH_LONG).show()
             return
         }
 
-        val html = popupFile.readText()
-        val shim = ExtensionManager.buildChromeApiShim(ext.id)
-        val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
         val popupFileUrl = "file://${popupFile.absolutePath}"
+        val shim = ExtensionManager.buildChromeApiShim(ext.id)
 
-        val density = resources.displayMetrics.density
-        val displayHeight = resources.displayMetrics.heightPixels
-        // Default to 90% of screen height so the popup is big, not a tiny strip.
-        val popupHeight = (displayHeight * 0.9).toInt()
+        // Open the popup in a full browser tab — not a dialog. This gives the
+        // extension the full screen, lets ES modules / CSS / JS load from disk
+        // via loadUrl, and the user can interact with it like any other page.
+        val tab = tabs.newTab(popupFileUrl)
+        attachTab(tab, restore = false)
+        tab.webView.loadUrl(popupFileUrl)
+        updateTabCount()
 
-        val popupWv = WebView(this).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = true
-            settings.allowContentAccess = true
-            settings.loadWithOverviewMode = true
-            settings.useWideViewPort = false
-            // L1: don't force LAYER_TYPE_HARDWARE — WebView manages its own
-            // layers and forcing hardware can cause text artifacts or a blank
-            // popup on some GPUs.
-            setBackgroundColor(0xFF07080F.toInt())
-            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-            // Expose the Chrome API bridge so popup scripts can call chrome.storage.* etc.
-            addJavascriptInterface(
-                com.lwbrowser.ext.ChromeApi(
-                    extDir = File(filesDir, "extensions"),
-                    onOpenUrl = { url -> runOnUiThread { openInNewTab(url) } },
-                    onQueryTabs = {
-                        val arr = org.json.JSONArray()
-                        tabs.all.forEachIndexed { i, tab ->
-                            val obj = org.json.JSONObject()
-                            obj.put("id", i + 1)
-                            obj.put("url", tab.url)
-                            obj.put("title", tab.title)
-                            obj.put("active", tab === tabs.current)
-                            arr.put(obj)
-                        }
-                        arr.toString()
-                    },
-                    onActiveTabUrl = { tabs.current?.url ?: "" }
-                ),
-                "_lumenChromeNative"
-            )
-            webViewClient = object : WebViewClient() {
-                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                    // Inject the shim BEFORE inline scripts run; onPageStarted fires
-                    // before any page script executes, so synchronous chrome.* calls
-                    // at load time resolve against the real bridge.
-                    view?.evaluateJavascript(shim, null)
+        // Inject the chrome.* API shim into the tab's WebView so the popup's
+        // JS can call chrome.storage.*, chrome.tabs.*, etc. Inject in both
+        // onPageStarted (before page scripts run) and onPageFinished (fallback).
+        // Also inject a viewport override so the popup fills the phone width
+        // perfectly regardless of what its <meta viewport> says.
+        val wv = tab.webView
+        val viewportOverride = """
+            (function(){
+                var m=document.querySelector('meta[name=viewport]');
+                if(!m){m=document.createElement('meta');m.name='viewport';document.head.appendChild(m);}
+                m.setAttribute('content','width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover');
+            })();
+        """.trimIndent()
+        wv.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                view?.evaluateJavascript(shim, null)
+                view?.evaluateJavascript(viewportOverride, null)
+            }
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                view?.evaluateJavascript(shim, null)
+                view?.evaluateJavascript(viewportOverride, null)
+            }
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val url = request?.url?.toString() ?: return false
+                // If the popup tries to navigate somewhere (e.g. a link click),
+                // open it in a new tab instead of replacing the popup.
+                if (!url.startsWith("file://")) {
+                    openInNewTab(url)
+                    return true
                 }
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                    // Re-inject in case onPageStarted's eval was dropped (some
-                    // loadDataWithBaseURL loads fire onPageFinished without a prior
-                    // onPageStarted). Idempotent — overwrites the same window.chrome.
-                    view?.evaluateJavascript(shim, null)
-                }
+                return false
             }
         }
-
-        // Modal dialog that sits at the bottom of the screen with an explicit
-        // height. BottomSheetDialog wraps content to 0px for a WebView that
-        // hasn't loaded yet — a regular Dialog with explicit dimensions is
-        // reliable.
-        val dialog = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar)
-        val binding = DialogExtensionPopupBinding.inflate(LayoutInflater.from(this))
-        binding.extPopupTitle.text = ext.name
-        binding.extPopupClose.setOnClickListener { dialog.dismiss() }
-        // Fullscreen toggle: swap between 90% height and full screen height.
-        var isFullscreen = false
-        binding.extPopupFullscreen.setOnClickListener {
-            isFullscreen = !isFullscreen
-            val h = if (isFullscreen) displayHeight else popupHeight
-            dialog.window?.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, h)
-        }
-        binding.extPopupWebContainer.addView(popupWv)
-        dialog.setContentView(binding.root)
-        dialog.window?.let { w ->
-            w.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, popupHeight)
-            w.setGravity(android.view.Gravity.BOTTOM)
-            w.setBackgroundDrawableResource(android.R.color.transparent)
-            w.setDimAmount(0.4f)
-            // Slide-up animation
-            w.setWindowAnimations(android.R.style.Animation_InputMethod)
-        }
-        // Destroy the WebView when the dialog is dismissed.
-        dialog.setOnDismissListener { popupWv.destroy() }
-        // Close on back press (default Dialog behavior) + touch outside.
-        dialog.setCanceledOnTouchOutside(true)
-        dialog.show()
-
-        // Load the popup directly via its file:// URL so that ES module imports,
-        // CSS <link> tags, and <script src> tags resolve to real files on disk.
-        // loadDataWithBaseURL breaks ES modules (import statements fail) and
-        // external resource loading.
-        popupWv.loadUrl(popupFileUrl)
     }
 
     private fun navigateTo(url: String) {
