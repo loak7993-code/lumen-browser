@@ -51,9 +51,6 @@ object Prefs {
     }
 
     private fun migrateStartPage() {
-        val saved = sp.getString("start_page", null)
-        if (saved != null && saved != DEFAULT_START_PAGE && !saved.startsWith("file:///android_asset/home")) {
-            sp.edit().putString("start_page", DEFAULT_START_PAGE).apply()
-        }
+        sp.edit().putString("start_page", DEFAULT_START_PAGE).apply()
     }
 }

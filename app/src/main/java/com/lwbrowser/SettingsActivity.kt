@@ -35,7 +35,9 @@ class SettingsActivity : AppCompatActivity() {
 
         b.settingsToolbar.setNavigationOnClickListener { finish() }
 
-        b.startPageInput.setText(Prefs.startPage)
+        b.startPageInput.setText(
+            if (Prefs.startPage == Prefs.DEFAULT_START_PAGE) "Dashboard" else Prefs.startPage
+        )
         b.swDark.isChecked = Prefs.forceDark
         b.swDesktop.isChecked = Prefs.desktopMode
         b.swImages.isChecked = Prefs.loadImages
@@ -49,7 +51,12 @@ class SettingsActivity : AppCompatActivity() {
         b.startPageInput.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 val text = b.startPageInput.text.toString().trim()
-                Prefs.startPage = if (text.isEmpty()) Prefs.DEFAULT_START_PAGE else text
+                if (text.isEmpty() || text.equals("Dashboard", ignoreCase = true)) {
+                    Prefs.startPage = Prefs.DEFAULT_START_PAGE
+                    b.startPageInput.setText("Dashboard")
+                } else {
+                    Prefs.startPage = text
+                }
             }
         }
         b.swDark.setOnCheckedChangeListener { _, v ->
