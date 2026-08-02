@@ -146,11 +146,11 @@ class MainActivity : AppCompatActivity() {
                 .start()
         }
         b.urlBarContainer.animate()
-            .scaleX(1.04f)
-            .scaleY(1.04f)
+            .scaleX(1.03f)
+            .scaleY(1.03f)
             .setDuration(200)
             .start()
-        animateTextSize(b.urlField, 16f)
+        animateTextSize(b.urlField, 18f)
     }
 
     private fun collapseUrlBar() {
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
             .scaleY(1f)
             .setDuration(200)
             .start()
-        animateTextSize(b.urlField, 14f)
+        animateTextSize(b.urlField, 16f)
     }
 
     private fun animateTextSize(view: EditText, targetSp: Float) {
