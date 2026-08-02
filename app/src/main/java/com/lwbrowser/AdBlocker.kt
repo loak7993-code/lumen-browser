@@ -129,6 +129,17 @@ object AdBlocker {
         "mixpanel.js", "segment.js", "amplitude.js", "heap.js",
     )
 
+    private val allowlistHosts = setOf(
+        "startpage.com", "www.startpage.com", "startpage.com.",
+        "duckduckgo.com", "www.duckduckgo.com",
+        "google.com", "www.google.com",
+        "bing.com", "www.bing.com",
+        "hcaptcha.com", "www.hcaptcha.com", "newassets.hcaptcha.com",
+        "recaptcha.net", "www.recaptcha.net", "recaptcha.google.com",
+        "www.gstatic.com", "gstatic.com",
+        "challenges.cloudflare.com",
+    )
+
     val adsBlocked = AtomicLong(0)
     val trackersBlocked = AtomicLong(0)
     val cosmeticHidden = AtomicLong(0)
@@ -139,6 +150,9 @@ object AdBlocker {
         val host = uri.host ?: return BlockResult.Allow
         val path = uri.path ?: ""
 
+        if (host in allowlistHosts || allowlistHosts.any { host.endsWith(".$it") }) {
+            return BlockResult.Allow
+        }
         if (host in adHosts || adHosts.any { host.endsWith(".$it") }) {
             if (Prefs.blockAds) { adsBlocked.incrementAndGet(); return BlockResult.BlockAd }
         }
@@ -265,19 +279,6 @@ object AntiFingerprint {
                         }
                         return origToDataURL.apply(this,arguments);
                     };
-                    try{Object.defineProperty(navigator,'hardwareConcurrency',{get:function(){return 4;}});}catch(e){}
-                    try{Object.defineProperty(navigator,'deviceMemory',{get:function(){return 4;}});}catch(e){}
-                    try{Object.defineProperty(navigator,'platform',{get:function(){return 'Linux x86_64';}});}catch(e){}
-                    try{Object.defineProperty(navigator,'languages',{get:function(){return ['en-US','en'];}});}catch(e){}
-                    try{
-                        Object.defineProperty(navigator,'plugins',{get:function(){return [];}});
-                    }catch(e){}
-                    try{
-                        var origGetBattery=navigator.getBattery;
-                        if(origGetBattery){
-                            navigator.getBattery=function(){return Promise.resolve({charging:true,chargingTime:0,dischargingTime:Infinity,level:1});};
-                        }
-                    }catch(e){}
                 }catch(e){}
             })();
         """.trimIndent()

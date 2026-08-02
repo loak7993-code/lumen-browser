@@ -72,6 +72,12 @@ class MainActivity : AppCompatActivity() {
         setupNav()
         setupMenu()
 
+        b.root.requestFocus()
+        b.urlField.clearFocus()
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(b.urlField.windowToken, 0)
+        hideSuggestions()
+
         if (intent?.action == ACTION_FOCUS_SEARCH) focusUrlBar()
     }
 
@@ -145,6 +151,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
+                if (!b.urlField.hasFocus()) return
                 b.btnClear.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
                 showSuggestions(s?.toString() ?: "")
             }
@@ -213,6 +220,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSuggestions(query: String) {
+        if (!b.urlField.hasFocus()) return
         val q = query.trim()
         if (q.isEmpty()) {
             val historyItems = HistoryStore.all().take(8)
@@ -409,6 +417,10 @@ class MainActivity : AppCompatActivity() {
         val wv = currentWebView() ?: return
         wv.loadUrl(url)
         b.urlField.clearFocus()
+        b.root.requestFocus()
+        hideSuggestions()
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(b.urlField.windowToken, 0)
     }
 
     private fun injectWebRTCBlock(wv: WebView) {
@@ -669,7 +681,6 @@ class MainActivity : AppCompatActivity() {
         s.loadsImagesAutomatically = Prefs.loadImages
         s.blockNetworkImage = !Prefs.loadImages
         s.cacheMode = WebSettings.LOAD_DEFAULT
-        s.userAgentString = s.userAgentString + " Lumen/1.0"
         s.useWideViewPort = true
         s.loadWithOverviewMode = true
         s.setSupportZoom(true)
@@ -691,6 +702,8 @@ class MainActivity : AppCompatActivity() {
         wv.webChromeClient = BrowserChromeClient()
         wv.setDownloadListener(BrowserDownloadListener())
         wv.setOnLongClickListener { handleLongClick(); true }
+        android.webkit.CookieManager.getInstance().setAcceptCookie(true)
+        android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
         wv.addJavascriptInterface(
             LumenSearchEngine(
                 { kind, json ->
@@ -1202,6 +1215,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         tabs.all.forEach { if (it.webViewReady()) it.webView.onResume() }
+        if (intent?.action != ACTION_FOCUS_SEARCH) {
+            b.urlField.clearFocus()
+            b.root.requestFocus()
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.hideSoftInputFromWindow(b.urlField.windowToken, 0)
+            hideSuggestions()
+        }
     }
 
     override fun onDestroy() {
