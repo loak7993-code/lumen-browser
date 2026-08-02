@@ -11,8 +11,8 @@ android {
         applicationId = "com.lwbrowser"
         minSdk = 26
         targetSdk = 35
-        versionCode = 21
-        versionName = "1.5.5"
+        versionCode = 22
+        versionName = "1.5.6"
         vectorDrawables { useSupportLibrary = true }
     }
 

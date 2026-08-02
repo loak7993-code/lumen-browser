@@ -482,7 +482,7 @@ class MainActivity : AppCompatActivity() {
                     if(document.getElementById('__lumen_night'))return;
                     var s=document.createElement('style');
                     s.id='__lumen_night';
-                    s.textContent='html{filter:invert(1) hue-rotate(180deg) !important;}img,video,picture,[style*="background-image"]{filter:invert(1) hue-rotate(180deg) !important;}';
+                    s.textContent='html{filter:invert(1) hue-rotate(180deg) !important;}img,video,picture,canvas,svg,iframe,[style*="background"]{filter:invert(1) hue-rotate(180deg) !important;}';
                     (document.head||document.documentElement).appendChild(s);
                 })();
             """.trimIndent()

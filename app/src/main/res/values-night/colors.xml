@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="url_bar_background">@color/surface_dark</color>
+    <color name="url_bar_stroke">@color/divider_dark</color>
     <color name="bg_light">@color/bg_dark</color>
+    <color name="surface_light">@color/surface_dark</color>
     <color name="stats_card_bg">@color/surface_dark</color>
     <color name="widget_bg_color">@color/surface_dark</color>
     <color name="widget_stroke_color">@color/divider_dark</color>
     <color name="dialog_bg_color">#1E2024</color>
+    <color name="divider_light">@color/divider_dark</color>
+    <color name="text_primary_light">@color/text_primary_dark</color>
+    <color name="text_secondary_light">@color/text_secondary_dark</color>
     <color name="progress_track">#1A3B82F6</color>
     <color name="ripple_overlay">#0FFFFFFF</color>
 </resources>
