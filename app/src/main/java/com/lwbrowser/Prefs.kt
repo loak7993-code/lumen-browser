@@ -67,7 +67,12 @@ object Prefs {
     }
 
     private fun migrateStartPage() {
-        sp.edit().putString("start_page", DEFAULT_START_PAGE).apply()
+        // One-time guard: only set the default start page if the key doesn't
+        // exist yet. Without this, every app launch would overwrite any custom
+        // start page the user picked in Settings.
+        if (!sp.contains("start_page")) {
+            sp.edit().putString("start_page", DEFAULT_START_PAGE).apply()
+        }
     }
 
     fun searchUrl(query: String): String {

@@ -29,6 +29,10 @@ class TabsManager {
 
     fun indexOf(tab: Tab): Int = tabs.indexOf(tab)
 
+    /** Find the Tab that owns the given WebView, or null if none. */
+    fun tabForView(view: android.webkit.WebView): Tab? =
+        tabs.firstOrNull { it.webViewReady() && it.webView === view }
+
     fun closeAt(index: Int): Tab? {
         if (index !in tabs.indices) return null
         tabs.removeAt(index).destroy()

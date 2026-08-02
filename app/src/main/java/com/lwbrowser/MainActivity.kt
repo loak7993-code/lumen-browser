@@ -463,9 +463,39 @@ class MainActivity : AppCompatActivity() {
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             setBackgroundColor(0xFF07080F.toInt())
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
+            // Expose the Chrome API bridge so popup scripts can call chrome.storage.* etc.
+            addJavascriptInterface(
+                com.lwbrowser.ext.ChromeApi(
+                    extDir = File(filesDir, "extensions"),
+                    onOpenUrl = { url -> runOnUiThread { openInNewTab(url) } },
+                    onQueryTabs = {
+                        val arr = org.json.JSONArray()
+                        tabs.all.forEachIndexed { i, tab ->
+                            val obj = org.json.JSONObject()
+                            obj.put("id", i + 1)
+                            obj.put("url", tab.url)
+                            obj.put("title", tab.title)
+                            obj.put("active", tab === tabs.current)
+                            arr.put(obj)
+                        }
+                        arr.toString()
+                    },
+                    onActiveTabUrl = { tabs.current?.url ?: "" }
+                ),
+                "_lumenChromeNative"
+            )
             webViewClient = object : WebViewClient() {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    // Inject the shim BEFORE inline scripts run; onPageStarted fires
+                    // before any page script executes, so synchronous chrome.* calls
+                    // at load time resolve against the real bridge.
+                    view?.evaluateJavascript(shim, null)
+                }
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
+                    // Re-inject in case onPageStarted's eval was dropped (some
+                    // loadDataWithBaseURL loads fire onPageFinished without a prior
+                    // onPageStarted). Idempotent — overwrites the same window.chrome.
                     view?.evaluateJavascript(shim, null)
                 }
             }
@@ -939,15 +969,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-            tabs.current?.isLoading = true
-            setRefreshIcon(true)
+            val tab = view?.let { tabs.tabForView(it) }
+            tab?.isLoading = true
+            if (tab === tabs.current) setRefreshIcon(true)
             hideError()
             updateProgress(1)
-            b.securityIcon.visibility = if (UrlUtils.isSecure(url)) View.VISIBLE else View.GONE
-            if (!b.urlField.isFocused) b.urlField.setText(displayUrl(url))
-            tabs.current?.url = url ?: ""
-            tabs.current?.favicon = favicon
-            tabs.current?.title = ""
+            if (tab === tabs.current) {
+                b.securityIcon.visibility = if (UrlUtils.isSecure(url)) View.VISIBLE else View.GONE
+                if (!b.urlField.isFocused) b.urlField.setText(displayUrl(url))
+            }
+            tab?.url = url ?: ""
+            tab?.favicon = favicon
+            tab?.title = ""
             if (view != null) {
                 injectAntiFingerprint(view)
                 if (Prefs.blockAds) injectCosmeticFilters(view)
@@ -960,10 +993,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPageFinished(view: WebView?, url: String?) {
-            tabs.current?.isLoading = false
-            setRefreshIcon(false)
-            updateProgress(100)
-            b.swipe.isRefreshing = false
+            val tab = view?.let { tabs.tabForView(it) }
+            tab?.isLoading = false
+            if (tab === tabs.current) {
+                setRefreshIcon(false)
+                updateProgress(100)
+                b.swipe.isRefreshing = false
+            }
             if (view != null) {
                 view.settings.textZoom = Prefs.pageZoom
                 if (Prefs.blockAds) injectCosmeticFilters(view)
@@ -974,37 +1010,47 @@ class MainActivity : AppCompatActivity() {
                     injectContentScripts(view, url, "document_idle")
                 }
             }
-            val tab = tabs.current
             if (tab != null && view != null) {
                 tab.canGoBack = view.canGoBack()
                 tab.canGoForward = view.canGoForward()
                 tab.url = url ?: tab.url
-                updateChromeFromTab(tab)
-                val title = view.title ?: ""
-                tab.title = title
+                tab.title = view.title ?: ""
+                if (tab === tabs.current) {
+                    updateChromeFromTab(tab)
+                }
                 if (!url.isNullOrEmpty() && !url.startsWith("file:///android_asset/")) {
-                    HistoryStore.add(HistoryItem(title.ifEmpty { UrlUtils.host(url) }, url, System.currentTimeMillis()))
+                    HistoryStore.add(HistoryItem(tab.title.ifEmpty { UrlUtils.host(url) }, url, System.currentTimeMillis()))
                 }
             }
         }
 
         override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
-            showError(description ?: getString(R.string.empty_history))
+            val tab = view?.let { tabs.tabForView(it) }
+            if (tab === tabs.current) {
+                showError(description ?: getString(R.string.empty_history))
+            }
         }
     }
 
     inner class BrowserChromeClient : WebChromeClient() {
         override fun onProgressChanged(view: WebView?, newProgress: Int) {
-            updateProgress(newProgress)
+            val tab = view?.let { tabs.tabForView(it) }
+            if (tab === tabs.current) {
+                updateProgress(newProgress)
+            }
         }
 
         override fun onReceivedTitle(view: WebView?, title: String?) {
-            tabs.current?.title = title ?: ""
-            tabs.current?.let { updateChromeFromTab(it) }
+            val tab = view?.let { tabs.tabForView(it) } ?: return
+            tab.title = title ?: ""
+            if (tab === tabs.current) {
+                updateChromeFromTab(tab)
+            }
         }
 
         override fun onReceivedIcon(view: WebView?, icon: Bitmap?) {
-            tabs.current?.favicon = icon
+            val tab = view?.let { tabs.tabForView(it) } ?: return
+            tab.favicon = icon
         }
 
         override fun onCreateWindow(
@@ -1014,6 +1060,9 @@ class MainActivity : AppCompatActivity() {
             newWv.webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     openInNewTab(request?.url?.toString() ?: "")
+                    // Destroy the transient WebView — it was only the transport for
+                    // window.open and leaks if left alive.
+                    view?.destroy()
                     return true
                 }
             }

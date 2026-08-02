@@ -9,23 +9,26 @@ import java.util.zip.ZipInputStream
 object ExtensionManager {
 
     private lateinit var extDir: File
+    private lateinit var prefs: android.content.SharedPreferences
     private val extensions = mutableListOf<Extension>()
     private val enabledIds = mutableSetOf<String>()
 
     fun init(context: Context) {
         extDir = File(context.filesDir, "extensions").apply { mkdirs() }
+        prefs = context.applicationContext.getSharedPreferences("lwbrowser_ext_state", Context.MODE_PRIVATE)
         loadEnabled()
         reload()
     }
 
     private fun loadEnabled() {
-        val prefs = extDir.parentFile?.parentFile?.let {
-            File(it, "shared_prefs/lwbrowser_prefs.xml")
-        }
         enabledIds.clear()
+        // Persist the *disabled* set (the minority case) so that freshly
+        // installed extensions default to enabled, but user-disabled ones stay
+        // disabled across restarts.
+        val disabled = prefs.getStringSet("disabled_ids", emptySet()) ?: emptySet()
         extDir.listFiles { f -> f.isDirectory }?.forEach { dir ->
             val manifest = File(dir, "manifest.json")
-            if (manifest.exists()) {
+            if (manifest.exists() && dir.name !in disabled) {
                 enabledIds.add(dir.name)
             }
         }
@@ -51,6 +54,9 @@ object ExtensionManager {
 
     fun setEnabled(id: String, enabled: Boolean) {
         if (enabled) enabledIds.add(id) else enabledIds.remove(id)
+        // Persist the disabled set so disable/enable survives restarts.
+        val disabled = extensions.filter { it.id !in enabledIds }.map { it.id }.toSet()
+        prefs.edit().putStringSet("disabled_ids", disabled).apply()
         extensions.indexOfFirst { it.id == id }.let { idx ->
             if (idx >= 0) {
                 val e = extensions[idx]
@@ -62,12 +68,16 @@ object ExtensionManager {
     fun uninstall(id: String) {
         extensions.removeAll { it.id == id }
         enabledIds.remove(id)
+        // Drop from the persisted disabled set too so we don't leak stale ids.
+        val disabled = (prefs.getStringSet("disabled_ids", emptySet()) ?: emptySet()) - id
+        prefs.edit().putStringSet("disabled_ids", disabled).apply()
         File(extDir, id).deleteRecursively()
     }
 
     fun install(context: Context, fileUri: android.net.Uri): Extension? {
-        val id = "ext_" + System.currentTimeMillis()
+        val id = "ext_" + java.util.UUID.randomUUID().toString()
         val target = File(extDir, id).apply { mkdirs() }
+        val targetRoot = target.canonicalPath
         try {
             val bytes = context.contentResolver.openInputStream(fileUri)?.use { it.readBytes() }
                 ?: return null
@@ -77,6 +87,11 @@ object ExtensionManager {
                 while (entry != null) {
                     if (!entry.isDirectory) {
                         val outFile = File(target, entry.name)
+                        // Zip Slip guard: reject entries that escape the extension dir.
+                        if (!outFile.canonicalPath.startsWith(targetRoot + File.separator)) {
+                            entry = zis.nextEntry
+                            continue
+                        }
                         outFile.parentFile?.mkdirs()
                         FileOutputStream(outFile).use { fos ->
                             zis.copyTo(fos)
@@ -113,15 +128,18 @@ object ExtensionManager {
         if (version == 2) {
             val pubKeyLen = bytesToInt(data, 8)
             val sigLen = bytesToInt(data, 12)
-            val offset = 16 + pubKeyLen + sigLen
-            if (offset in 16..data.size) {
-                return data.copyOfRange(offset, data.size)
+            // Reject negative/overflowing lengths before computing the offset.
+            if (pubKeyLen < 0 || sigLen < 0) return data
+            val offset = 16L + pubKeyLen.toLong() + sigLen.toLong()
+            if (offset in 16..data.size.toLong()) {
+                return data.copyOfRange(offset.toInt(), data.size)
             }
         } else if (version == 3) {
             val headerLen = bytesToInt(data, 8)
-            val offset = 12 + headerLen
-            if (offset in 12..data.size) {
-                return data.copyOfRange(offset, data.size)
+            if (headerLen < 0) return data
+            val offset = 12L + headerLen.toLong()
+            if (offset in 12..data.size.toLong()) {
+                return data.copyOfRange(offset.toInt(), data.size)
             }
         }
         return data
@@ -155,22 +173,31 @@ object ExtensionManager {
 
     fun loadFile(extId: String, path: String): String? {
         val dir = File(extDir, extId)
+        val dirRoot = dir.canonicalPath
         val file = File(dir, path)
+        // Path traversal guard: reject paths escaping the extension dir.
+        if (!file.canonicalPath.startsWith(dirRoot + File.separator) && file.canonicalPath != dirRoot) return null
         if (file.exists() && file.isFile) return file.readText()
         val manifest = findManifest(dir) ?: return null
         val base = manifest.parentFile ?: dir
+        val baseRoot = base.canonicalPath
         val resolved = File(base, path)
+        if (!resolved.canonicalPath.startsWith(baseRoot + File.separator) && resolved.canonicalPath != baseRoot) return null
         return if (resolved.exists() && resolved.isFile) resolved.readText() else null
     }
 
     fun loadIconBase64(extId: String, iconPath: String): String? {
         val dir = File(extDir, extId)
         val file = File(dir, iconPath)
+        val traversalSafe: (File, String) -> File? = { base, p ->
+            val baseRoot = base.canonicalPath
+            val f = File(base, p)
+            if (f.canonicalPath.startsWith(baseRoot + File.separator) || f.canonicalPath == baseRoot) f else null
+        }
         val actualFile = if (file.exists() && file.isFile) file else {
             val manifest = findManifest(dir) ?: return null
             val base = manifest.parentFile ?: dir
-            val resolved = File(base, iconPath)
-            if (resolved.exists() && resolved.isFile) resolved else return null
+            traversalSafe(base, iconPath)?.takeIf { it.exists() && it.isFile } ?: return null
         }
         val mime = when {
             iconPath.endsWith(".png") -> "png"

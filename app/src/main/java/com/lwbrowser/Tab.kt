@@ -1,6 +1,6 @@
 package com.lwbrowser
 
-import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import java.util.UUID
@@ -23,8 +23,9 @@ class Tab(
             webView.stopLoading()
             webView.webChromeClient = null
             webView.webViewClient = WebViewClient()
-            (webView.parent as? View)?.let { _ ->
-            }
+            // Detach the WebView from its parent before destroying; otherwise the
+            // ViewGroup keeps a reference and the WebView leaks.
+            (webView.parent as? ViewGroup)?.removeView(webView)
             webView.destroy()
         }
     }
