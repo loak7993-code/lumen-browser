@@ -489,6 +489,14 @@ class MainActivity : AppCompatActivity() {
         // via loadUrl, and the user can interact with it like any other page.
         val tab = tabs.newTab(popupFileUrl)
         attachTab(tab, restore = false)
+        // Override the WebView settings so the popup fills the phone width
+        // perfectly. The default tab settings (useWideViewPort=true,
+        // loadWithOverviewMode=true) render at a desktop layout width and
+        // scale down, leaving empty space on the sides. For the popup we want
+        // the layout width to equal the device width.
+        tab.webView.settings.useWideViewPort = false
+        tab.webView.settings.loadWithOverviewMode = false
+        tab.webView.setInitialScale(100)
         tab.webView.loadUrl(popupFileUrl)
         updateTabCount()
 
