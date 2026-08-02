@@ -220,7 +220,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun updateStats() {
-        val (ads, trackers) = AdBlocker.stats()
+        val (ads, trackers, cosmetic) = AdBlocker.stats()
         b.txtAdsCount.text = ads.toString()
         b.txtTrackersCount.text = trackers.toString()
     }

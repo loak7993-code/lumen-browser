@@ -250,6 +250,30 @@ class MainActivity : AppCompatActivity() {
         wv.evaluateJavascript(js, null)
     }
 
+    private fun injectCosmeticFilters(wv: WebView) {
+        val css = CosmeticFilters.cssHideRules()
+        val js = """
+            (function(){
+                if(document.getElementById('__lumen_cosmetic'))return;
+                var s=document.createElement('style');
+                s.id='__lumen_cosmetic';
+                s.textContent=${"\"\"\""}$css${"\"\"\""};
+                (document.head||document.documentElement).appendChild(s);
+                var observer=new MutationObserver(function(){
+                    document.querySelectorAll('${"\"\"\""}${CosmeticFilters.cssSelectors.joinToString(",")}${"\"\"\""}').forEach(function(el){
+                        if(getComputedStyle(el).display!=='none'){el.style.display='none';}
+                    });
+                });
+                observer.observe(document.body||document.documentElement,{childList:true,subtree:true});
+            })();
+        """.trimIndent()
+        wv.evaluateJavascript(js, null)
+    }
+
+    private fun injectAntiFingerprint(wv: WebView) {
+        wv.evaluateJavascript(AntiFingerprint.js(), null)
+    }
+
     private fun injectContentScripts(wv: WebView, url: String, runAt: String) {
         for (ext in ExtensionManager.scriptsFor(url, runAt)) {
             for (cs in ext.scriptsFor(url, runAt)) {
@@ -467,8 +491,12 @@ class MainActivity : AppCompatActivity() {
             tabs.current?.url = url ?: ""
             tabs.current?.favicon = favicon
             tabs.current?.title = ""
-            if (Prefs.blockWebRTC && view != null) injectWebRTCBlock(view)
-            if (view != null && url != null) injectContentScripts(view, url, "document_start")
+            if (view != null) {
+                injectAntiFingerprint(view)
+                if (Prefs.blockAds) injectCosmeticFilters(view)
+                if (Prefs.blockWebRTC) injectWebRTCBlock(view)
+                if (url != null) injectContentScripts(view, url, "document_start")
+            }
         }
 
         override fun onPageFinished(view: WebView?, url: String?) {
@@ -476,10 +504,13 @@ class MainActivity : AppCompatActivity() {
             setRefreshIcon(false)
             updateProgress(100)
             b.swipe.isRefreshing = false
-            if (Prefs.blockWebRTC && view != null) injectWebRTCBlock(view)
-            if (view != null && url != null) {
-                injectContentScripts(view, url, "document_end")
-                injectContentScripts(view, url, "document_idle")
+            if (view != null) {
+                if (Prefs.blockAds) injectCosmeticFilters(view)
+                if (Prefs.blockWebRTC) injectWebRTCBlock(view)
+                if (url != null) {
+                    injectContentScripts(view, url, "document_end")
+                    injectContentScripts(view, url, "document_idle")
+                }
             }
             if (pendingSearch != null && view != null && url?.startsWith("file:///android_asset/search.html") == true) {
                 val q = pendingSearch!!

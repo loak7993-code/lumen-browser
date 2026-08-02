@@ -58,7 +58,7 @@ class LumenSearchEngine(private val callback: (String, String) -> Unit) {
 
     @JavascriptInterface
     fun getProtectionStats(): String {
-        val (ads, trackers) = AdBlocker.stats()
+        val (ads, trackers, cosmetic) = AdBlocker.stats()
         return "Protected · ${ads + trackers} blocked"
     }
 
