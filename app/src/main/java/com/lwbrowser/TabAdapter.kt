@@ -25,6 +25,15 @@ class TabAdapter(
         val tab = tabs[position]
         holder.b.tabTitle.text = tab.title.ifEmpty { UrlUtils.host(tab.url) }
         holder.b.tabUrl.text = tab.url
+        // M5: bind the favicon if we have one, otherwise leave the globe placeholder.
+        if (tab.favicon != null) {
+            holder.b.tabFavicon.setImageDrawable(null)
+            holder.b.tabFavicon.setImageBitmap(tab.favicon)
+            holder.b.tabFavicon.imageTintList = null
+        } else {
+            holder.b.tabFavicon.setImageResource(R.drawable.ic_globe)
+            holder.b.tabFavicon.imageTintList = androidx.core.content.ContextCompat.getColorStateList(holder.b.root.context, R.color.text_secondary_light)
+        }
         holder.b.root.setOnClickListener { onClick(position) }
         holder.b.btnCloseTab.setOnClickListener { onClose(position) }
         val selected = position == selectedIndex

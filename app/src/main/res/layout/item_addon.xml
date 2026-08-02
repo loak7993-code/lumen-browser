@@ -6,7 +6,9 @@
     android:gravity="center_vertical"
     android:padding="12dp"
     android:layout_marginVertical="4dp"
-    android:background="@drawable/stats_card_bg">
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/stats_card_bg_clickable">
 
     <ImageView
         android:id="@+id/addonIcon"
@@ -14,7 +16,7 @@
         android:layout_height="40dp"
         android:layout_marginEnd="12dp"
         android:scaleType="fitCenter"
-        android:contentDescription="@string/action_uninstall"
+        android:contentDescription="@null"
         android:src="@drawable/ic_add" />
 
     <LinearLayout
@@ -59,8 +61,8 @@
 
     <ImageButton
         android:id="@+id/addonUninstall"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_marginStart="8dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/action_uninstall"

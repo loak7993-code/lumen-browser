@@ -56,10 +56,10 @@
 
         <ImageButton
             android:id="@+id/itemDelete"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@null"
+            android:contentDescription="@string/action_close_tab"
             android:src="@drawable/ic_close"
             app:tint="?attr/colorOnSurface" />
     </LinearLayout>

@@ -41,8 +41,8 @@
 
             <ImageButton
                 android:id="@+id/btnCloseTab"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/action_close_tab"
                 android:src="@drawable/ic_close"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pill-shaped tab count badge: grows to fit 2+ digit tab counts (M2). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
+    android:shape="rectangle">
     <solid android:color="@color/brand_primary" />
-    <size android:width="14dp" android:height="14dp" />
+    <corners android:radius="8dp" />
 </shape>

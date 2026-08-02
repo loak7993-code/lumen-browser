@@ -79,4 +79,18 @@
     <string name="incognito_warning">Incognito mode: No history, cookies, or data saved</string>
     <string name="saved_screenshot">Screenshot saved</string>
     <string name="reader_title">Reader Mode</string>
+
+    <!-- M10: error page title (was showing app name). -->
+    <string name="error_title">Page unavailable</string>
+    <!-- M14: btnMenu opens the menu, not Settings. -->
+    <string name="action_menu">Menu</string>
+    <!-- L3: btnExt content description (was hardcoded). -->
+    <string name="action_extensions">Extensions</string>
+    <!-- M4: find bar button content descriptions (were @null). -->
+    <string name="action_find_next">Next match</string>
+    <string name="action_find_prev">Previous match</string>
+    <string name="action_find_close">Close find bar</string>
+    <!-- L13: retry button (was using generic Refresh). -->
+    <string name="action_retry">Retry</string>
+    <string name="action_close_find">Close find</string>
 </resources>

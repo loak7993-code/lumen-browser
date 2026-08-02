@@ -277,7 +277,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
-            android:src="@drawable/ic_search"
+            android:src="@drawable/ic_reader"
             app:tint="?attr/colorOnSurface" />
         <TextView
             android:layout_width="0dp"
@@ -327,7 +327,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@null"
-            android:src="@drawable/ic_desktop"
+            android:src="@drawable/ic_night"
             app:tint="?attr/colorOnSurface" />
         <TextView
             android:layout_width="0dp"

@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- H1: OLED electric-violet accent in dark mode. Day mode keeps the dark
+         brand_primary for the light theme; night mode overrides to violet so
+         colorPrimary refs (section headers, switch tracks, dialog icons,
+         widget icons, link icons, filled buttons) actually render. -->
+    <color name="brand_primary">#8B5CF6</color>
+    <color name="colorPrimary">#8B5CF6</color>
+
+    <!-- H2: OLED obsidian background + recessed surface in dark mode. The base
+         bg_dark was generic dark gray (#121316); the theme spec calls for
+         #07080F. Surfaces sit slightly above the bg so cards/bars separate. -->
+    <color name="bg_dark">#07080F</color>
+    <color name="surface_dark">#11131E</color>
+    <color name="dialog_bg_color">#11131E</color>
+    <color name="divider_dark">#2A2D3A</color>
+
     <color name="url_bar_background">@color/surface_dark</color>
     <color name="url_bar_stroke">@color/divider_dark</color>
     <color name="bg_light">@color/bg_dark</color>
@@ -7,10 +22,11 @@
     <color name="stats_card_bg">@color/surface_dark</color>
     <color name="widget_bg_color">@color/surface_dark</color>
     <color name="widget_stroke_color">@color/divider_dark</color>
-    <color name="dialog_bg_color">#1E2024</color>
     <color name="divider_light">@color/divider_dark</color>
     <color name="text_primary_light">@color/text_primary_dark</color>
     <color name="text_secondary_light">@color/text_secondary_dark</color>
-    <color name="progress_track">#1A3B82F6</color>
-    <color name="ripple_overlay">#0FFFFFFF</color>
+    <!-- M16: progress bar on-theme (cyan) instead of generic blue. -->
+    <color name="progress">#22D3EE</color>
+    <color name="progress_track">#1A22D3EE</color>
+    <color name="ripple_overlay">#14FFFFFF</color>
 </resources>

@@ -1108,7 +1108,7 @@ class MainActivity : AppCompatActivity() {
             errorBinding = ErrorPageBinding.bind(stub.inflate())
             errorBinding?.btnRetry?.setOnClickListener { currentWebView()?.reload() }
         }
-        errorBinding?.errorTitle?.text = getString(R.string.app_name)
+        errorBinding?.errorTitle?.setText(R.string.error_title)
         errorBinding?.errorMessage?.text = message
         errorBinding?.root?.visibility = View.VISIBLE
     }
@@ -1156,6 +1156,14 @@ class MainActivity : AppCompatActivity() {
         val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         container.addView(binding.root, container.indexOfChild(b.swipe), params)
         findBinding = binding
+        // M3: populate the match counter so the user sees "x of y".
+        currentWebView()?.setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
+            if (isDoneCounting && numberOfMatches > 0) {
+                binding.findCount.text = "${activeMatchOrdinal + 1}/$numberOfMatches"
+            } else if (isDoneCounting && numberOfMatches == 0) {
+                binding.findCount.text = "0/0"
+            }
+        }
         binding.findField.setOnEditorActionListener { v, _, _ ->
             doFind(v.text.toString())
             true
