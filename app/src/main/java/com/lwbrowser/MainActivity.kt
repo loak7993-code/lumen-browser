@@ -700,10 +700,7 @@ class MainActivity : AppCompatActivity() {
         }
         val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         if (isDark) {
-            wv.setBackgroundColor(0xFF1E2024.toInt())
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                s.forceDark = WebSettings.FORCE_DARK_ON
-            }
+            wv.setBackgroundColor(0xFF121316.toInt())
         } else {
             wv.setBackgroundColor(android.graphics.Color.WHITE)
         }
