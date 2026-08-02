@@ -1,7 +1,7 @@
 package com.lwbrowser.ext
 
 import android.content.Context
-import org.json.JSONObject
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipInputStream
@@ -65,23 +65,24 @@ object ExtensionManager {
         File(extDir, id).deleteRecursively()
     }
 
-    fun install(context: Context, xpiUri: android.net.Uri): Extension? {
+    fun install(context: Context, fileUri: android.net.Uri): Extension? {
         val id = "ext_" + System.currentTimeMillis()
         val target = File(extDir, id).apply { mkdirs() }
         try {
-            context.contentResolver.openInputStream(xpiUri)?.use { input ->
-                ZipInputStream(input).use { zis ->
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        if (!entry.isDirectory) {
-                            val outFile = File(target, entry.name)
-                            outFile.parentFile?.mkdirs()
-                            FileOutputStream(outFile).use { fos ->
-                                zis.copyTo(fos)
-                            }
+            val bytes = context.contentResolver.openInputStream(fileUri)?.use { it.readBytes() }
+                ?: return null
+            val zipBytes = stripCrxHeader(bytes)
+            ZipInputStream(ByteArrayInputStream(zipBytes)).use { zis ->
+                var entry = zis.nextEntry
+                while (entry != null) {
+                    if (!entry.isDirectory) {
+                        val outFile = File(target, entry.name)
+                        outFile.parentFile?.mkdirs()
+                        FileOutputStream(outFile).use { fos ->
+                            zis.copyTo(fos)
                         }
-                        entry = zis.nextEntry
                     }
+                    entry = zis.nextEntry
                 }
             }
         } catch (e: Exception) {
@@ -101,6 +102,35 @@ object ExtensionManager {
             enabledIds.add(id)
             ext
         }.getOrNull()
+    }
+
+    private fun stripCrxHeader(data: ByteArray): ByteArray {
+        if (data.size < 4) return data
+        val magic = String(data, 0, 4, Charsets.US_ASCII)
+        if (magic != "Cr24") return data
+        if (data.size < 16) return data
+        val version = bytesToInt(data, 4)
+        if (version == 2) {
+            val headerLen = bytesToInt(data, 8)
+            val offset = 12 + headerLen
+            if (offset < data.size) {
+                return data.copyOfRange(offset, data.size)
+            }
+        } else if (version == 3) {
+            val headerLen = bytesToInt(data, 8)
+            val offset = 16 + headerLen
+            if (offset < data.size) {
+                return data.copyOfRange(offset, data.size)
+            }
+        }
+        return data
+    }
+
+    private fun bytesToInt(data: ByteArray, offset: Int): Int {
+        return (data[offset].toInt() and 0xFF) or
+            ((data[offset + 1].toInt() and 0xFF) shl 8) or
+            ((data[offset + 2].toInt() and 0xFF) shl 16) or
+            ((data[offset + 3].toInt() and 0xFF) shl 24)
     }
 
     private fun findManifest(root: File): File? {

@@ -6,6 +6,8 @@ import org.json.JSONObject
 data class ContentScript(
     val matches: List<MatchPattern>,
     val excludeMatches: List<MatchPattern>,
+    val includeGlobs: List<String>,
+    val excludeGlobs: List<String>,
     val js: List<String>,
     val css: List<String>,
     val runAt: String,
@@ -25,7 +27,9 @@ data class Extension(
         return contentScripts.filter { cs ->
             (cs.runAt.isEmpty() || cs.runAt == runAt) &&
                 cs.matches.any { it.matches(url) } &&
-                cs.excludeMatches.none { it.matches(url) }
+                cs.excludeMatches.none { it.matches(url) } &&
+                (cs.includeGlobs.isEmpty() || cs.includeGlobs.any { GlobPattern.matches(it, url) }) &&
+                (cs.excludeGlobs.isEmpty() || cs.excludeGlobs.none { GlobPattern.matches(it, url) })
         }
     }
 
@@ -40,12 +44,14 @@ data class Extension(
                     val cs = csArray.getJSONObject(i)
                     val matches = parsePatterns(cs.optJSONArray("matches"))
                     val excludeMatches = parsePatterns(cs.optJSONArray("exclude_matches"))
+                    val includeGlobs = parseStringList(cs.optJSONArray("include_globs"))
+                    val excludeGlobs = parseStringList(cs.optJSONArray("exclude_globs"))
                     val js = parseStringList(cs.optJSONArray("js"))
                     val css = parseStringList(cs.optJSONArray("css"))
                     val runAt = cs.optString("run_at", "document_idle")
                     val allFrames = cs.optBoolean("all_frames", false)
                     if (matches.isNotEmpty()) {
-                        contentScripts.add(ContentScript(matches, excludeMatches, js, css, runAt, allFrames))
+                        contentScripts.add(ContentScript(matches, excludeMatches, includeGlobs, excludeGlobs, js, css, runAt, allFrames))
                     }
                 }
             }
@@ -75,5 +81,28 @@ data class Extension(
             for (i in 0 until arr.length()) list.add(arr.getString(i))
             return list
         }
+    }
+}
+
+object GlobPattern {
+    fun matches(glob: String, url: String): Boolean {
+        val regexStr = globToRegex(glob)
+        val regex = Regex(regexStr, RegexOption.IGNORE_CASE)
+        return regex.matches(url)
+    }
+
+    private fun globToRegex(glob: String): String {
+        val sb = StringBuilder()
+        for (c in glob) {
+            when (c) {
+                '*' -> sb.append(".*")
+                '?' -> sb.append(".")
+                '.', '+', '(', ')', '[', ']', '{', '}', '^', '$', '|', '\\' -> {
+                    sb.append('\\').append(c)
+                }
+                else -> sb.append(c)
+            }
+        }
+        return sb.toString()
     }
 }

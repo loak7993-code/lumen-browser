@@ -20,7 +20,7 @@ class SettingsActivity : AppCompatActivity() {
     private var url: String = ""
     private var title: String = ""
 
-    private val pickXpi = registerForActivityResult(
+    private val pickExtension = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) installAddon(uri)
@@ -114,7 +114,15 @@ class SettingsActivity : AppCompatActivity() {
         setupRow(b.rowFind.root, R.drawable.ic_search, R.string.action_find) { returnResult(ACTION_FIND) }
         setupRow(b.rowExit.root, R.drawable.ic_close, R.string.row_exit) { returnResult(ACTION_EXIT) }
 
-        b.btnInstallAddon.setOnClickListener { pickXpi.launch("*/*") }
+        b.btnInstallAddon.setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "*/*"
+                val extraMime = arrayOf("application/x-chrome-extension", "application/zip", "application/octet-stream", "application/x-zip-compressed")
+                putExtra(Intent.EXTRA_MIME_TYPES, extraMime)
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            pickExtension.launch("*/*")
+        }
         refreshAddons()
     }
 

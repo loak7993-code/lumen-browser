@@ -56,10 +56,10 @@
     <string name="row_open_external">Open in external browser</string>
     <string name="row_exit">Exit browser</string>
     <string name="widget_search_label">Lumen Search</string>
-    <string name="section_addons">Add-ons (Firefox extensions)</string>
-    <string name="action_install">Install .xpi</string>
+    <string name="section_addons">Extensions (Chrome)</string>
+    <string name="action_install">Install .crx / .zip</string>
     <string name="action_uninstall">Uninstall</string>
-    <string name="addons_empty">No add-ons installed. Install a .xpi file to get started.</string>
-    <string name="install_failed">Installation failed. Is this a valid .xpi file?</string>
-    <string name="install_success">Add-on installed</string>
+    <string name="addons_empty">No extensions installed. Install a .crx or .zip file to get started.</string>
+    <string name="install_failed">Installation failed. Is this a valid Chrome extension?</string>
+    <string name="install_success">Extension installed</string>
 </resources>
