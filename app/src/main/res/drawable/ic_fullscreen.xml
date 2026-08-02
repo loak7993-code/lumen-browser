@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fullscreen toggle icon for extension popup. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M7,14H5v5h5v-2H7v-3zm-2,-4h2V7h3V5H5v5zM17,17v-3h2v5h-5v-2h3zM17,7V5h-2v2h-3v5h5V7z" />
+</vector>

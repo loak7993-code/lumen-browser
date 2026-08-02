@@ -424,17 +424,14 @@ class MainActivity : AppCompatActivity() {
     private fun showExtensionPopupPicker() {
         ExtensionManager.reload()
         val allExts = ExtensionManager.all()
-        val exts = allExts.filter { it.enabled && it.browserAction["popup"]?.isNotEmpty() == true }
+        val exts = allExts.filter { it.enabled }
         if (exts.isEmpty()) {
-            android.widget.Toast.makeText(this, "No extensions with popups (${allExts.size} installed, ${allExts.filter { it.enabled }.size} enabled). Opening settings.", android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(this, "No enabled extensions (${allExts.size} installed). Opening settings.", android.widget.Toast.LENGTH_LONG).show()
             startActivity(Intent(this, SettingsActivity::class.java))
             return
         }
-        if (exts.size == 1) {
-            showExtensionPopup(exts[0])
-            return
-        }
-        // Bottom-sheet picker — slides up from the bottom with extension rows.
+        // Show the picker for any number of extensions — even if only one has
+        // a popup, the user should see all enabled extensions and choose.
         val sheet = BottomSheetDialog(this)
         val binding = DialogExtensionPickerBinding.inflate(LayoutInflater.from(this))
         sheet.setContentView(binding.root)
@@ -452,7 +449,21 @@ class MainActivity : AppCompatActivity() {
                     row.extRowIcon.imageTintList = null
                 }
             }
-            row.root.setOnClickListener { sheet.dismiss(); showExtensionPopup(ext) }
+            val hasPopup = ext.browserAction["popup"]?.isNotEmpty() == true
+            row.root.setOnClickListener {
+                sheet.dismiss()
+                if (hasPopup) {
+                    showExtensionPopup(ext)
+                } else {
+                    // No popup — open the options page if it has one, else toast.
+                    val opts = ExtensionManager.optionsPage(ext.id)
+                    if (opts != null) {
+                        openInNewTab("file://${filesDir.absolutePath}/extensions/${ext.id}/$opts")
+                    } else {
+                        android.widget.Toast.makeText(this, "${ext.name} has no popup", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             binding.extPickerList.addView(row.root)
         }
         sheet.show()
@@ -531,6 +542,23 @@ class MainActivity : AppCompatActivity() {
         val binding = DialogExtensionPopupBinding.inflate(LayoutInflater.from(this))
         binding.extPopupTitle.text = ext.name
         binding.extPopupClose.setOnClickListener { sheet.dismiss() }
+        // Fullscreen toggle: expand the sheet to fill the whole screen, or
+        // shrink back to the normal peek height. The drag handle is hidden in
+        // fullscreen so the user can't accidentally drag it closed.
+        var isFullscreen = false
+        val displayHeight = resources.displayMetrics.heightPixels
+        binding.extPopupFullscreen.setOnClickListener {
+            isFullscreen = !isFullscreen
+            if (isFullscreen) {
+                sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+                sheet.behavior.peekHeight = displayHeight
+                sheet.behavior.skipCollapsed = true
+                sheet.behavior.isDraggable = false
+            } else {
+                sheet.behavior.peekHeight = popupHeight
+                sheet.behavior.isDraggable = true
+            }
+        }
         binding.extPopupWebContainer.addView(popupWv)
         sheet.setContentView(binding.root)
         sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
