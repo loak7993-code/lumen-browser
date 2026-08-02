@@ -137,22 +137,20 @@ class MainActivity : AppCompatActivity() {
     private fun expandUrlBar() {
         val navButtons = listOf(b.btnTabs, b.btnMenu)
         for (btn in navButtons) {
+            btn.animate().cancel()
             btn.animate()
                 .alpha(0f)
                 .scaleX(0.7f)
                 .scaleY(0.7f)
-                .setDuration(200)
-                .withEndAction { btn.visibility = View.INVISIBLE }
+                .setDuration(150)
+                .withEndAction { btn.visibility = View.GONE }
                 .start()
         }
+        b.tabCount.animate().cancel()
         b.tabCount.animate()
             .alpha(0f)
-            .setDuration(200)
-            .start()
-        b.urlBarContainer.animate()
-            .scaleX(1.03f)
-            .scaleY(1.03f)
-            .setDuration(200)
+            .setDuration(150)
+            .withEndAction { b.tabCount.visibility = View.GONE }
             .start()
         animateTextSize(b.urlField, 16f)
     }
@@ -160,22 +158,24 @@ class MainActivity : AppCompatActivity() {
     private fun collapseUrlBar() {
         val navButtons = listOf(b.btnTabs, b.btnMenu)
         for (btn in navButtons) {
+            btn.animate().cancel()
             btn.visibility = View.VISIBLE
+            btn.alpha = 0f
+            btn.scaleX = 0.7f
+            btn.scaleY = 0.7f
             btn.animate()
                 .alpha(1f)
                 .scaleX(1f)
                 .scaleY(1f)
-                .setDuration(200)
+                .setDuration(150)
                 .start()
         }
+        b.tabCount.animate().cancel()
+        b.tabCount.visibility = View.VISIBLE
+        b.tabCount.alpha = 0f
         b.tabCount.animate()
             .alpha(1f)
-            .setDuration(200)
-            .start()
-        b.urlBarContainer.animate()
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(200)
+            .setDuration(150)
             .start()
         animateTextSize(b.urlField, 14f)
     }
