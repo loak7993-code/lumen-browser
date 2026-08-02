@@ -5,17 +5,52 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Outer glow ring (violet) -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:fillAlpha="0.15"
+        android:pathData="M54,12C31.9,12 14,29.9 14,52s17.9,40 40,40 40,-17.9 40,-40S76.1,12 54,12zM54,86c-18.78,0 -34,-15.22 -34,-34s15.22,-34 34,-34 34,15.22 34,34 -15.22,34 -34,34z" />
+
+    <!-- Inner ring (cyan accent) -->
+    <path
+        android:fillColor="#06B6D4"
+        android:fillAlpha="0.25"
+        android:pathData="M54,20C36.33,20 22,34.33 22,52s14.33,32 32,32 32,-14.33 32,-32S71.67,20 54,20zM54,80c-15.46,0 -28,-12.54 -28,-28s12.54,-28 28,-28 28,12.54 28,28 -12.54,28 -28,28z" />
+
+    <!-- L monogram - vertical stroke -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,18C34.12,18 18,34.12 18,54s16.12,36 36,36 36,-16.12 36,-36S73.88,18 54,18zM54,84c-16.54,0 -30,-13.46 -30,-30s13.46,-30 30,-30 30,13.46 30,30 -13.46,30 -30,30z" />
+        android:pathData="M44,28L44,68h20v-6h-14v-34z" />
 
+    <!-- L monogram - horizontal stroke base -->
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
-        android:pathData="M54,24c-3.31,0 -6,13.43 -6,30s2.69,30 6,30 6,-13.43 6,-30 -2.69,-30 -6,-30zM24,54c0,3.31 13.43,6 30,6s30,-2.69 30,-6 -13.43,-6 -30,-6 -30,2.69 -30,6z" />
+        android:pathData="M44,62h20v6h-20z" />
 
+    <!-- Light beam emanating from L (violet glow) -->
     <path
-        android:fillColor="#FFD600"
-        android:pathData="M58,30L40,58h10l-4,20 22,-32h-12z" />
+        android:fillColor="#8B5CF6"
+        android:pathData="M50,28m-2,0a2,2 0 1,0 4,0a2,2 0 1,0 -4,0z" />
+
+    <!-- Glow dot above L -->
+    <path
+        android:fillColor="#06B6D4"
+        android:pathData="M44,22m-1.5,0a1.5,1.5 0 1,0 3,0a1.5,1.5 0 1,0 -3,0z" />
+
+    <!-- Subtle light rays (top-right) -->
+    <path
+        android:strokeColor="#8B5CF6"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.4"
+        android:strokeLineCap="round"
+        android:pathData="M72,24l4,-3M76,30l5,-1M68,20l2,-4" />
+
+    <!-- Subtle light rays (bottom-left, fainter) -->
+    <path
+        android:strokeColor="#06B6D4"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.25"
+        android:strokeLineCap="round"
+        android:pathData="M28,76l-3,3M24,70l-4,2M32,80l-1,4" />
+
 </vector>
