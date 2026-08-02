@@ -472,6 +472,21 @@ class MainActivity : AppCompatActivity() {
         wv.evaluateJavascript(AntiFingerprint.js(), null)
     }
 
+    private fun injectDarkModeSignal(wv: WebView) {
+        val isDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        if (!isDark) return
+        val js = """
+            (function(){
+                if(document.getElementById('__lumen_dark'))return;
+                var s=document.createElement('style');
+                s.id='__lumen_dark';
+                s.textContent=':root{color-scheme:dark !important;}html{background-color:#121316 !important;}';
+                (document.head||document.documentElement).appendChild(s);
+            })();
+        """.trimIndent()
+        wv.evaluateJavascript(js, null)
+    }
+
     private fun injectNightMode() {
         val wv = currentWebView() ?: return
         val url = wv.url ?: return
@@ -871,6 +886,7 @@ class MainActivity : AppCompatActivity() {
             tabs.current?.title = ""
             if (view != null) {
                 injectAntiFingerprint(view)
+                injectDarkModeSignal(view)
                 if (Prefs.blockAds) injectCosmeticFilters(view)
                 if (Prefs.blockWebRTC) injectWebRTCBlock(view)
                 if (url != null) {
@@ -887,6 +903,7 @@ class MainActivity : AppCompatActivity() {
             b.swipe.isRefreshing = false
             if (view != null) {
                 view.settings.textZoom = Prefs.pageZoom
+                injectDarkModeSignal(view)
                 if (Prefs.blockAds) injectCosmeticFilters(view)
                 if (Prefs.blockWebRTC) injectWebRTCBlock(view)
                 if (Prefs.nightMode) injectNightMode()
