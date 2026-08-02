@@ -475,13 +475,21 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val html = ExtensionManager.loadFile(ext.id, popupPath) ?: run {
+        // Resolve the popup file on disk. If it exists, we load it directly via
+        // loadUrl() so that ES module imports, CSS <link>, and <script src>
+        // resolve to real files on disk (loadDataWithBaseURL breaks ES modules
+        // and external resources). Fall back to loadDataWithBaseURL only if
+        // the file can't be read.
+        val popupFile = File(filesDir, "extensions/${ext.id}/$popupPath")
+        if (!popupFile.exists()) {
             android.widget.Toast.makeText(this, "Could not load popup: $popupPath", android.widget.Toast.LENGTH_LONG).show()
             return
         }
 
+        val html = popupFile.readText()
         val shim = ExtensionManager.buildChromeApiShim(ext.id)
         val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
+        val popupFileUrl = "file://${popupFile.absolutePath}"
 
         val density = resources.displayMetrics.density
         val displayHeight = resources.displayMetrics.heightPixels
@@ -569,7 +577,11 @@ class MainActivity : AppCompatActivity() {
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
 
-        popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
+        // Load the popup directly via its file:// URL so that ES module imports,
+        // CSS <link> tags, and <script src> tags resolve to real files on disk.
+        // loadDataWithBaseURL breaks ES modules (import statements fail) and
+        // external resource loading.
+        popupWv.loadUrl(popupFileUrl)
     }
 
     private fun navigateTo(url: String) {
