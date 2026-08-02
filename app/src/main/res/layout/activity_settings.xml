@@ -47,25 +47,25 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/section_display" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swDark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_dark_mode" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swDesktop"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/action_desktop" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swImages"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_load_images" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swJs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,25 +78,25 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/section_privacy" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swBlockAds"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_block_ads" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swBlockTrackers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_block_trackers" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swBlockWebRTC"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_block_webrtc" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/swHistory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -133,7 +133,7 @@
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/brand_primary"
-                        android:text="0" />
+                        android:text="@string/zero" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -160,7 +160,7 @@
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/secure"
-                        android:text="0" />
+                        android:text="@string/zero" />
 
                     <TextView
                         android:layout_width="wrap_content"

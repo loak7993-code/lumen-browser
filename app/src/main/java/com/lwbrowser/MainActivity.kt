@@ -24,7 +24,6 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -150,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showOverflowMenu() {
-        val view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_menu, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_menu, b.root as ViewGroup, false)
         val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this)
         sheet.setContentView(view)
 
@@ -179,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<View>(R.id.rowBookmark).setOnClickListener { sheet.dismiss(); toggleBookmark() }
         view.findViewById<View>(R.id.rowFind).setOnClickListener { sheet.dismiss(); showFindBar() }
 
-        val swDesktop = view.findViewById<Switch>(R.id.swDesktopMenu)
+        val swDesktop = view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.swDesktopMenu)
         swDesktop.isChecked = Prefs.desktopMode
         swDesktop.setOnCheckedChangeListener { _, v ->
             Prefs.desktopMode = v
@@ -257,6 +256,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun injectCosmeticFilters(wv: WebView) {
         val css = CosmeticFilters.cssHideRules()
+        val selectorsJson = CosmeticFilters.cssSelectors.joinToString(",") { "\"$it\"" }
         val js = """
             (function(){
                 if(document.getElementById('__lumen_cosmetic'))return;
@@ -264,15 +264,19 @@ class MainActivity : AppCompatActivity() {
                 s.id='__lumen_cosmetic';
                 s.textContent=${"\"\"\""}$css${"\"\"\""};
                 (document.head||document.documentElement).appendChild(s);
+                var selectors=[$selectorsJson];
                 var observer=new MutationObserver(function(){
-                    document.querySelectorAll('${"\"\"\""}${CosmeticFilters.cssSelectors.joinToString(",")}${"\"\"\""}').forEach(function(el){
-                        if(getComputedStyle(el).display!=='none'){el.style.display='none';}
-                    });
+                    for(var i=0;i<selectors.length;i++){
+                        document.querySelectorAll(selectors[i]).forEach(function(el){
+                            if(getComputedStyle(el).display!=='none'){el.style.display='none';}
+                        });
+                    }
                 });
                 observer.observe(document.body||document.documentElement,{childList:true,subtree:true});
             })();
         """.trimIndent()
         wv.evaluateJavascript(js, null)
+        AdBlocker.incrementCosmetic()
     }
 
     private fun injectAntiFingerprint(wv: WebView) {
@@ -409,7 +413,7 @@ class MainActivity : AppCompatActivity() {
                     MenuItem(R.drawable.ic_share, "Copy link") { copyToClipboard(url) },
                     MenuItem(R.drawable.ic_cloud_off, "Download image") { triggerDownload(url, null) }
                 )
-                val view = LayoutInflater.from(this).inflate(R.layout.dialog_menu, null)
+                val view = LayoutInflater.from(this).inflate(R.layout.dialog_menu, b.root as ViewGroup, false)
                 val recycler = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.menuRecycler)
                 val dialog = AlertDialog.Builder(this).setView(view).create()
                 dialog.setOnShowListener {
@@ -656,7 +660,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleDesktopMode() {
-        Prefs.desktopMode = !Prefs.desktopMode
         val wv = currentWebView() ?: return
         val s = wv.settings
         if (Prefs.desktopMode) {
@@ -718,7 +721,7 @@ class MainActivity : AppCompatActivity() {
             toast(getString(R.string.empty_tabs))
             return
         }
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_tabs, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_tabs, b.root as ViewGroup, false)
         val recycler = view.findViewById<RecyclerView>(R.id.tabsRecycler)
         view.findViewById<TextView>(R.id.tabsTitle).text =
             "${tabs.count} ${getString(R.string.action_tabs).lowercase()}"
@@ -727,9 +730,10 @@ class MainActivity : AppCompatActivity() {
             openInNewTab(Prefs.startPage)
         }
         recycler.layoutManager = androidx.recyclerview.widget.GridLayoutManager(this, 2)
-        recycler.adapter = TabAdapter(tabs.all, tabs.indexOf(tabs.current!!), { idx ->
+        val currentIdx = tabs.current?.let { tabs.indexOf(it) } ?: 0
+        recycler.adapter = TabAdapter(tabs.all, currentIdx, { idx ->
             tabs.select(idx)
-            attachTab(tabs.current!!, restore = true)
+            tabs.current?.let { attachTab(it, restore = true) }
             dismissActiveDialog()
         }, { idx ->
             tabs.closeAt(idx)
@@ -739,7 +743,7 @@ class MainActivity : AppCompatActivity() {
                 attachTab(tab, restore = false)
                 tab.webView.loadUrl(Prefs.startPage)
             } else {
-                attachTab(tabs.current!!, restore = true)
+                tabs.current?.let { attachTab(it, restore = true) }
                 dismissActiveDialog()
                 showTabsDialog()
             }
@@ -762,7 +766,7 @@ class MainActivity : AppCompatActivity() {
     private fun showBookmarks() {
         val items = BookmarkStore.all()
         if (items.isEmpty()) { toast(getString(R.string.empty_bookmarks)); return }
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, b.root as ViewGroup, false)
         view.findViewById<android.widget.TextView>(R.id.linksTitle).text = getString(R.string.action_bookmarks)
         val recycler = view.findViewById<RecyclerView>(R.id.linksRecycler)
         recycler.layoutManager = LinearLayoutManager(this)
@@ -782,7 +786,7 @@ class MainActivity : AppCompatActivity() {
     private fun showHistory() {
         val items = HistoryStore.all()
         if (items.isEmpty()) { toast(getString(R.string.empty_history)); return }
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, b.root as ViewGroup, false)
         view.findViewById<android.widget.TextView>(R.id.linksTitle).text = getString(R.string.action_history)
         val recycler = view.findViewById<RecyclerView>(R.id.linksRecycler)
         recycler.layoutManager = LinearLayoutManager(this)
@@ -802,7 +806,7 @@ class MainActivity : AppCompatActivity() {
     private fun showDownloads() {
         val items = DownloadStore.all()
         if (items.isEmpty()) { toast(getString(R.string.downloads_empty)); return }
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_links, b.root as ViewGroup, false)
         view.findViewById<android.widget.TextView>(R.id.linksTitle).text = getString(R.string.action_downloads)
         val recycler = view.findViewById<RecyclerView>(R.id.linksRecycler)
         recycler.layoutManager = LinearLayoutManager(this)
@@ -838,9 +842,8 @@ class MainActivity : AppCompatActivity() {
             findBinding != null -> closeFindBar()
             wv != null && wv.canGoBack() -> wv.goBack()
             tabs.count > 1 -> {
-                tabs.close(tabs.current!!)
-                if (tabs.current != null) attachTab(tabs.current!!, restore = true)
-                else finish()
+                tabs.current?.let { tabs.close(it) }
+                tabs.current?.let { attachTab(it, restore = true) } ?: finish()
             }
             else -> {
                 super.onBackPressed()

@@ -62,4 +62,5 @@
     <string name="addons_empty">No extensions installed. Install a .crx or .zip file to get started.</string>
     <string name="install_failed">Installation failed. Is this a valid Chrome extension?</string>
     <string name="install_success">Extension installed</string>
+    <string name="zero">0</string>
 </resources>

@@ -32,7 +32,7 @@
             android:ellipsize="end" />
     </LinearLayout>
 
-    <Switch
+    <com.google.android.material.materialswitch.MaterialSwitch
         android:id="@+id/addonSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

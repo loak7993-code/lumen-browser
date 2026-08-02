@@ -6,121 +6,101 @@ import java.util.concurrent.atomic.AtomicLong
 object AdBlocker {
 
     private val adHosts = setOf(
-        "doubleclick.net", "googleadservices.com", "googlesyndication.com",
-        "pagead2.googlesyndication.com", "googletagservices.com", "adservice.google.com",
-        "ads.google.com", "admob.com", "adsystem.com", "amazon-adsystem.com",
-        "aax.amazon-adsystem.com", "aax-us-east.amazon-adsystem.com",
-        "adnxs.com", "criteo.com", "criteo.net", "pubmatic.com", "rubiconproject.com",
-        "openx.net", "moatads.com", "serving-sys.com", "advertising.com", "2mdn.net",
-        "adsrvr.org", "rlcdn.com", "bidswitch.net", "casalemedia.com", "krxd.net",
-        "chartbeat.com", "yieldlab.net", "adform.net", "smartadserver.com", "exoclick.com",
-        "propellerads.com", "popads.net", "popcash.net", "adcash.com", "adsterra.com",
-        "hilltopads.com", "media.net", "taboola.com", "outbrain.com", "revcontent.com",
-        "contentads.com", "mgid.com", "adsterra.com", "yllix.com", "adhigh.net",
-        "admixer.net", "adspeed.com", "adkernel.com", "epom.com", "plista.com",
-        "adstargets.com", "yldistrtict.com", "zedo.com", "adtech.de", "adtech.com",
-        "intergi.com", "gumgum.com", "engageya.com", "ntv.io", "lockerdome.com",
-        "mantisadnetwork.com", "connexity.com", "skimresources.com", "viglink.com",
-        "linksynergy.com", "awempire.com", "traffichaus.com", "exosrv.com", "tsyndicate.com",
-        "quantserve.com", "scorecardresearch.com",
-        "adcolony.com", "applovin.com", "chartboost.com", "unityads.unity3d.com",
-        "vungle.com", "ironsrc.com", "startapp.com", "inmobi.com", "mopub.com",
-        "admob.org", "adsymptotic.com", "adstune.com", "adbrite.com", "adbmedia.com",
-        "adk2.com", "yieldmo.com", "bidsxchange.com", "contextweb.com", "sekindo.com",
-        "inneractive.com", "undertone.com", "mediavine.com", "adzerk.com",
-        "buysellads.com", "dpbolvw.net", "apmebf.com", "kqzyfj.com", "tkqlhj.com",
-        "qksz.net", "qksrv.net", "jdoqocy.com", "pjatr.com", "pjtra.com",
-        "tqlkg.com", "afcyhf.com", "ltzoa.com", "rnsfb.com", "rjzvw.com",
-        "xtrk.com", "adroll.com", "rollup.io", "adap.tv", "tribalfusion.com",
-        "clicksor.com", "infolinks.com", "kontera.com", "vibrantmedia.com",
-        "intellitxt.com", "echo-topic.com", "mirago.com", "adbutler.com",
-        "hi-ads.com", "admanage.com", "addynamo.com", "admobie.com", "admize.com",
-        "adocean.com", "adonize.com", "adoptim.com", "adpath.com", "adreactor.com",
-        "adsfactor.com", "adsfactor.net", "adstogo.com", "adsupply.com", "adtaily.com",
-        "adtegrity.com", "adultfriendfinder.com", "adversal.com", "adverserve.com",
-        "adworldnetwork.com", "adxpower.com", "adyard.com", "adyoulike.com",
-        "agkn.com", "adgibbo.com", "udmserve.net", "undertone.com", "ybrantdigital.com",
-        "yoc.com", "yoban.com", "yoc.com", "zedo.com", "zdbb.net", "zemanta.com",
-        "adadvisor.net", "adbrite.com", "adclix.com", "addtot.com",
-        "mediacom.com", "freewheel.com", "fwmrm.net", "tremorhub.com",
-        "aniview.com", "contentabc.com", "digitaldsp.com", "divinity.com",
-        "yumenetwork.com", "ybp.yume.com", "adserver.yahoo.com", "adserver.yadro.com",
-        "ru4.com", "advmaker.ru", "advmaker.com", "adsense.com",
-        "adservice.com", "adsfactor.com", "tiscali.com", "virgilio.it",
-        "adsfac.eu", "adsfac.net", "adsfac.us", "adsrvr.org",
-        "adtech.de", "adtech.com", "adtech.net", "adtech.com.au",
-        "2mdn.net", "doubleclick.com", "doubleverify.com", "adtech.com",
-        "creativecdn.com", "gemius.pl", "inskin.com", "inskinmedia.com",
-        "admixer.net", "admixer.com", "admixer.co", "minutemedia.com",
-        "minutemedia-prebid.com", "mobileadvertising.com", "mobileads.com",
-        "ads.youtube.com", "ads.reddit.com", "ads.tiktok.com", "ads.snapchat.com",
-        "ads.pinterest.com", "ads.twitter.com", "ads.linkedin.com",
-        "ads.instagram.com", "ads.facebook.com", "ads.ebay.com", "ads.craigslist.org",
+        "2mdn.net", "aax-us-east.amazon-adsystem.com", "aax.amazon-adsystem.com",
+        "adadvisor.net", "adap.tv", "adbmedia.com", "adbrite.com", "adbutler.com",
+        "adcash.com", "adclix.com", "adcolony.com", "addtot.com", "addynamo.com",
+        "adform.net", "adgibbo.com", "adhigh.net", "adk2.com", "adkernel.com",
+        "admize.com", "admixer.com", "admixer.co", "admixer.net", "admob.com",
+        "admob.org", "admobie.com", "adnxs.com", "adocean.com", "adonize.com",
+        "adpath.com", "adreactor.com", "adroll.com", "ads.google.com", "ads.youtube.com",
+        "ads.reddit.com", "ads.tiktok.com", "ads.snapchat.com", "ads.pinterest.com",
+        "ads.twitter.com", "ads.linkedin.com", "ads.instagram.com", "ads.facebook.com",
+        "ads.ebay.com", "ads.craigslist.org", "adsense.com", "adservice.com",
         "adservice.google.com", "adservice.google.de", "adservice.google.co.uk",
-        "fundingchoicesmessages.google.com", "googlesyndication.com",
+        "adsfactor.com", "adsfactor.net", "adsfac.eu", "adsfac.net", "adsfac.us",
+        "adspeed.com", "adsrvr.org", "adsterra.com", "adstogo.com", "adsupply.com",
+        "adsystem.com", "adtaily.com", "adtech.com", "adtech.com.au", "adtech.de",
+        "adtech.net", "adtegrity.com", "adversal.com", "adverserve.com",
+        "adview", "adworldnetwork.com", "adyard.com", "adyoulike.com",
+        "adzerk.com", "amazon-adsystem.com", "aniview.com", "applovin.com",
+        "awempire.com", "buysellads.com", "casalemedia.com", "chartboost.com",
+        "clicksor.com", "connexity.com", "contentabc.com", "creativecdn.com",
+        "criteo.com", "criteo.net", "digitaldsp.com", "divinity.com",
+        "doubleclick.com", "doubleclick.net", "doubleverify.com",
+        "dpbolvw.net", "engageya.com", "epom.com", "exoclick.com",
+        "freewheel.com", "fundingchoicesmessages.google.com", "fwmrm.net",
+        "gemius.pl", "googleadservices.com", "googlesyndication.com",
+        "googletagservices.com", "gumgum.com", "hilltopads.com",
+        "infolinks.com", "inneractive.com", "inmobi.com", "inskin.com",
+        "inskinmedia.com", "intergi.com", "kontera.com", "lockerdome.com",
+        "mantisadnetwork.com", "media.net", "mediacom.com", "mediavine.com",
+        "mgid.com", "minutemedia.com", "minutemedia-prebid.com",
+        "mobileadvertising.com", "mobileads.com", "mopub.com",
+        "ntv.io", "outbrain.com", "pagead2.googlesyndication.com",
+        "plista.com", "popads.net", "popcash.net", "propellerads.com",
+        "pubmatic.com", "quantserve.com", "revcontent.com", "rollup.io",
+        "ru4.com", "rubiconproject.com", "scorecardresearch.com",
+        "serving-sys.com", "smartadserver.com", "startapp.com",
+        "taboola.com", "tsyndicate.com", "tribalfusion.com", "tremorhub.com",
+        "undertone.com", "unityads.unity3d.com", "viglink.com", "vibrantmedia.com",
+        "vungle.com", "ybrantdigital.com", "yldistrtict.com", "yllix.com",
+        "yieldlab.net", "yieldmo.com", "yoc.com", "yoban.com",
+        "yumenetwork.com", "ybp.yume.com", "zdbb.net", "zedo.com",
+        "zemanta.com", "advertising.com", "2mdn.net", "adserver.yahoo.com",
+        "adserver.yadro.com", "advmaker.ru", "advmaker.com",
     )
 
     private val trackerHosts = setOf(
-        "googletagmanager.com", "google-analytics.com", "ssl.google-analytics.com",
-        "analytics.google.com", "segment.io", "segment.com", "mixpanel.com", "amplitude.com",
-        "hotjar.com", "fullstory.com", "logrocket.com", "mouseflow.com", "luckyorange.com",
-        "clarity.ms", "bat.bing.com", "facebook.net", "connect.facebook.net",
-        "sb.scorecardresearch.com", "nr-data.net", "new-relic.com", "newrelic.com",
-        "rumcdn.com", "intercom.io", "intercomcdn.com", "app.link", "branch.io",
-        "adjust.com", "appsflyer.com", "kochava.com", "tune.com", "mobileapptracking.com",
-        "mathtag.com", "bluekai.com", "demdex.net", "omtrdc.net", "everestjs.net",
-        "everesttech.net", "datafastguru.io", "hh-promo.com", "ipify.org", "ipinfo.io",
-        "ip-api.com", "userlytics.com", "clicktale.net", "smartlook.com", "userreplay.com",
-        "tealium.com", "tealiumiq.com", "ensighten.com", "sessioncam.com", "quantcast.com",
-        "quantserve.com", "comscore.com", "optimizely.com", "crazyegg.com", "kissmetrics.com",
-        "chartbeat.com", "parsely.com", "parsnip.com", "walkme.com", "heap.io",
-        "snowplowanalytics.com", "piwik.org", "matomo.org", "matomo.cloud",
-        "fingerprintjs.com", "fpjs.io", "deviceatlas.com", "wurfl.io",
-        "iovation.com", "threatmetrix.com", "recaptcha.net", "g.doubleclick.net",
-        "stats.g.doubleclick.net", "snap.licdn.com", "px.ads.linkedin.com",
-        "ads.linkedin.com", "ads.pinterest.com", "tags.tiqcdn.com", "ct.pinterest.com",
-        "analytics.tiktok.com", "analytics.snapchat.com", "sc-static.net",
-        "bat.bing.com", "xandr.com", "appnexus.com",
-        "pixel.facebook.com", "connect.facebook.net", "graph.facebook.com",
-        "api.facebook.com", "analytics.twitter.com", "t.co",
-        "px.ads.linkedin.com", "snap.licdn.com", "stats.g.doubleclick.net",
-        "ad.doubleclick.net", "fls.doubleclick.net", "stats.example.com",
-        "t.datadog.com", "t.datadoghq.com", "browser-intake-datadoghq.com",
-        "rumcdn.com", "sentry.io", "o1.ingest.sentry.io", "o2.ingest.sentry.io",
-        "cdn.o2.ingest.sentry.io", "config.gtm-360.com", "www.googletagmanager.com",
-        "www.google-analytics.com", "tagmanager.google.com",
-        "tracking.gamingforgood.net", "collector.example.com",
-        "analytics.example.com", "trackcmp.com", "trackers.com", "tracking.com",
-        "ppctracking.com", "conversion.com", "retargeting.com",
-        "dynamicyield.com", "dynamicyield.com", "evergage.com", "permutive.com",
-        "permutive.app", "cdn.permutive.com", "mparticle.com", "api.mparticle.com",
-        "evidon.com", "ensighten.com", "eyeota.com", "admitad.com", "tradetracker.net",
-        "tradedoubler.com", "tradeadexchange.com", "trafficjunky.com",
-        "effirst.com", "ipredictive.com", "mandiant.com", "media01.com",
-        "tag.1rx.io", "tagsrvr.com", "rfihub.com", "rfihub.net",
-        "retargeter.com", "revcontent.com", "revjet.com", "revjets.com",
-        "revresponse.com", "rightaction.com", "rlcdn.com", "rmcp.net",
-        "roia.biz", "rubiconproject.com", "safehaven.com", "salesviewer.com",
-        "sascdn.com", "saymedia.com", "sekindo.com", "semantiqo.com",
-        "serverbid.com", "servedby.com", "shareaholic.com", "sharethrough.com",
-        "shopzilla.com", "simpli.fi", "sitescout.com", "skimresources.com",
-        "smartadserver.com", "smtrm.net", "sonobi.com", "sortable.com",
-        "spotx.com", "spotxchange.com", "spotx.tv", "statcounter.com",
-        "steelhouse.com", "steelhousemedia.com", "streamads.com", "sumome.com",
-        "superads.com", "sxp.com", "sync1.com", "taboola.com",
-        "taboolasyndication.com", "tapad.com", "tapgage.com", "tapit.com",
-        "teadma.com", "teads.tv", "telemetree.com", "telerama.com",
-        "temel.com", "tpc.googlesyndication.com", "tpgs.com", "tpid.com",
-        "trackalyzer.com", "trackcmp.com", "trackers.com", "tracking.com",
-        "tradeadexchange.com", "tradedoubler.com", "tradetracker.net",
-        "trafficmanager.com", "trafficjunky.com", "trf.com", "tribalfusion.com",
-        "triggit.com", "truefit.com", "truelead.com", "tubemogul.com",
-        "turn.com", "tynt.com", "unrulymedia.com", "upscore.com",
-        "userlytics.com", "viglink.com", "viralmedia.com", "visiblemeasures.com",
-        "vmmapi.com", "voicefive.com", "vpon.com", "web-ads.com",
-        "webtelemetry.com", "wtatistics.com", "xplosion.de", "yieldads.com",
-        "yieldbuild.com", "yieldlab.net", "yieldmo.com", "yieldoptimizer.com",
-        "yldbt.com", "zanox.com", "zdbb.net", "zedo.com",
+        "ad.doubleclick.net", "adjust.com", "admitad.com", "ads.linkedin.com",
+        "ads.pinterest.com", "amplitude.com", "analytics.example.com",
+        "analytics.google.com", "analytics.snapchat.com", "analytics.tiktok.com",
+        "analytics.twitter.com", "api.facebook.com", "api.mparticle.com",
+        "app.link", "appnexus.com", "apps.facebook.com", "appsflyer.com",
+        "bat.bing.com", "bluekai.com", "branch.io", "browser-intake-datadoghq.com",
+        "cdn.o2.ingest.sentry.io", "cdn.permutive.com", "clarity.ms",
+        "clicktale.net", "comscore.com", "config.gtm-360.com",
+        "connect.facebook.net", "conversion.com", "crazyegg.com",
+        "ct.pinterest.com", "datafastguru.io", "demdex.net",
+        "deviceatlas.com", "dynamicyield.com", "ensighten.com",
+        "evergage.com", "everestjs.net", "everesttech.net",
+        "evidon.com", "eyeota.com", "fingerprintjs.com", "fls.doubleclick.net",
+        "fpjs.io", "fullstory.com", "g.doubleclick.net", "google-analytics.com",
+        "googletagmanager.com", "graph.facebook.com", "heap.io",
+        "hh-promo.com", "hotjar.com", "intercom.io", "intercomcdn.com",
+        "iovation.com", "ip-api.com", "ipify.org", "ipinfo.io",
+        "ipredictive.com", "kissmetrics.com", "kochava.com", "logrocket.com",
+        "luckyorange.com", "mouseflow.com", "mixpanel.com", "mparticle.com",
+        "matomo.org", "matomo.cloud", "mobileapptracking.com", "newrelic.com",
+        "new-relic.com", "nr-data.net", "omtrdc.net", "optimizely.com",
+        "o1.ingest.sentry.io", "o2.ingest.sentry.io", "parsely.com",
+        "permutive.com", "permutive.app", "pixel.facebook.com",
+        "piwik.org", "ppctracking.com", "px.ads.linkedin.com",
+        "quantcast.com", "quantserve.com", "retargeter.com", "retargeting.com",
+        "rfihub.com", "rfihub.net", "rlcdn.com", "rumcdn.com",
+        "salesviewer.com", "sb.scorecardresearch.com", "sc-static.net",
+        "segment.com", "segment.io", "sentry.io", "sessioncam.com",
+        "shareaholic.com", "sharethrough.com", "sitescout.com",
+        "skimresources.com", "smartlook.com", "snap.licdn.com",
+        "snowplowanalytics.com", "sonobi.com", "sortable.com",
+        "spotx.com", "spotxchange.com", "spotx.tv", "ssl.google-analytics.com",
+        "statcounter.com", "stats.g.doubleclick.net", "steelhouse.com",
+        "steelhousemedia.com", "streamads.com", "sumome.com", "superads.com",
+        "sxp.com", "sync1.com", "t.co", "t.datadog.com", "t.datadoghq.com",
+        "taboolasyndication.com", "tag.1rx.io", "tagmanager.google.com",
+        "tapad.com", "tapgage.com", "tapit.com", "teads.tv", "teadma.com",
+        "tealium.com", "tealiumiq.com", "telemetree.com", "temel.com",
+        "threatmetrix.com", "tpc.googlesyndication.com", "tpgs.com", "tpid.com",
+        "trackcmp.com", "trackers.com", "tracking.com", "tradeadexchange.com",
+        "tradedoubler.com", "tradetracker.net", "trafficjunky.com",
+        "trafficmanager.com", "trf.com", "tribalfusion.com", "triggit.com",
+        "truefit.com", "truelead.com", "tubemogul.com", "turn.com",
+        "tynt.com", "unrulymedia.com", "upscore.com", "userlytics.com",
+        "userreplay.com", "viglink.com", "viralmedia.com", "visiblemeasures.com",
+        "vmmapi.com", "voicefive.com", "vpon.com", "walkme.com",
+        "web-ads.com", "webtelemetry.com", "wtatistics.com",
+        "www.googletagmanager.com", "www.google-analytics.com",
+        "xplosion.de", "yieldads.com", "yieldbuild.com", "yieldoptimizer.com",
+        "yldbt.com", "zanox.com", "tags.tiqcdn.com",
     )
 
     private val blockedPaths = listOf(
@@ -132,7 +112,7 @@ object AdBlocker {
         "/doubleclick", "/gtm.js", "/gtm/", "/tagmanager", "/tealium",
         "/scorecard", "/quantserve", "/chartbeat", "/pixel.gif", "/pixel.js",
         "/log.gif", "/log.js", "/__log", "/event.gif", "/event.js", "/collect",
-        "/adsense", "/adsystem", "/adview", "/adclick", "/adcall",
+        "/adsense", "/adview", "/adclick", "/adcall",
         "/adrender", "/adserve", "/adspaces", "/bouncer", "/sync",
         "/redirect", "/impression", "/track/", "/track?", "/stats",
         "/metrics", "/telemetry", "/sentry", "/amplitude", "/heap",
@@ -147,17 +127,6 @@ object AdBlocker {
         "gpt.js", "prebid.js", "adserver.js", "popads.js", "popunder.js",
         "fingerprint.js", "fp.js", "chartbeat.js", "hotjar.js",
         "mixpanel.js", "segment.js", "amplitude.js", "heap.js",
-    )
-
-    private val thirdPartyAdDomains = setOf(
-        "admob.com", "admob.org", "adsense.com", "doubleclick.com",
-        "doubleclick.net", "googleadservices.com", "googlesyndication.com",
-        "googletagservices.com", "adnxs.com", "criteo.com", "pubmatic.com",
-        "rubiconproject.com", "openx.net", "casalemedia.com", "smartadserver.com",
-        "adform.net", "yieldlab.net", "exoclick.com", "propellerads.com",
-        "popads.net", "adcash.com", "adsterra.com", "media.net",
-        "taboola.com", "outbrain.com", "revcontent.com", "mgid.com",
-        "contentads.com", "zedo.com", "adtech.de", "gumgum.com",
     )
 
     val adsBlocked = AtomicLong(0)
@@ -188,10 +157,8 @@ object AdBlocker {
         return BlockResult.Allow
     }
 
-    fun shouldUpgradeToHttps(url: String?): Boolean {
-        if (url == null) return false
-        if (!url.startsWith("http://")) return false
-        return Prefs.blockAds
+    fun incrementCosmetic() {
+        cosmeticHidden.incrementAndGet()
     }
 
     enum class BlockResult { Allow, BlockAd, BlockTracker }
@@ -211,10 +178,10 @@ object CosmeticFilters {
         ".ad-content", ".ad-holder", ".ad-item", ".ad-label", ".ad-placeholder",
         ".ad-section", ".ad-slot", ".ad-space", ".ad-unit", ".ad-wrapper",
         ".ad-zone", ".ad160", ".ad300", ".ad728", ".ad90", ".ad970",
-        ".adsbygoogle", ".ad-banner", ".ad-leaderboard", ".ad-skyscraper",
+        ".adsbygoogle", ".ad-leaderboard", ".ad-skyscraper",
         ".ad-rectangle", ".ad-square", ".ad-half", ".ad-full", ".ad-wide",
         ".ads-container", ".ads-area", ".ads-box", ".ads-wrap",
-        ".adsense", ".adsbygoogle", ".adchoices", ".adchoice",
+        ".adsense", ".adchoices", ".adchoice",
         ".banner-ads", ".banner-ad", ".banner-ads-container",
         ".bottom-ad", ".bottom-ads", ".bottom-banner",
         ".top-ad", ".top-ads", ".top-banner",
@@ -274,26 +241,6 @@ object CosmeticFilters {
     fun cssHideRules(): String {
         return cssSelectors.joinToString(",") + "{display:none!important;visibility:hidden!important;height:0!important;width:0!important;opacity:0!important;}"
     }
-
-    fun cosmeticJs(): String {
-        val selectors = cssSelectors.map { it.replace("\"", "\\\"") }
-        return """
-            (function(){
-                var s=document.createElement('style');
-                s.id='__lumen_cosmetic';
-                s.textContent=${"\"\"\""}${cssHideRules()}${"\"\"\""};
-                document.head.appendChild(s);
-                var observer=new MutationObserver(function(){
-                    document.querySelectorAll('${cssSelectors.joinToString(",")}').forEach(function(el){
-                        if(getComputedStyle(el).display!=='none'){
-                            el.style.display='none';
-                        }
-                    });
-                });
-                observer.observe(document.body||document.documentElement,{childList:true,subtree:true});
-            })();
-        """.trimIndent()
-    }
 }
 
 object AntiFingerprint {
@@ -323,7 +270,6 @@ object AntiFingerprint {
                     try{Object.defineProperty(navigator,'platform',{get:function(){return 'Linux x86_64';}});}catch(e){}
                     try{Object.defineProperty(navigator,'languages',{get:function(){return ['en-US','en'];}});}catch(e){}
                     try{
-                        var plugins=navigator.plugins;
                         Object.defineProperty(navigator,'plugins',{get:function(){return [];}});
                     }catch(e){}
                     try{

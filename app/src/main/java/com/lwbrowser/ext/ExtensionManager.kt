@@ -111,15 +111,16 @@ object ExtensionManager {
         if (data.size < 16) return data
         val version = bytesToInt(data, 4)
         if (version == 2) {
-            val headerLen = bytesToInt(data, 8)
-            val offset = 12 + headerLen
-            if (offset < data.size) {
+            val pubKeyLen = bytesToInt(data, 8)
+            val sigLen = bytesToInt(data, 12)
+            val offset = 16 + pubKeyLen + sigLen
+            if (offset in 16..data.size) {
                 return data.copyOfRange(offset, data.size)
             }
         } else if (version == 3) {
             val headerLen = bytesToInt(data, 8)
-            val offset = 16 + headerLen
-            if (offset < data.size) {
+            val offset = 12 + headerLen
+            if (offset in 12..data.size) {
                 return data.copyOfRange(offset, data.size)
             }
         }

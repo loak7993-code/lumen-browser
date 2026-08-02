@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -151,7 +150,7 @@ class SettingsActivity : AppCompatActivity() {
             val row = LayoutInflater.from(this).inflate(R.layout.item_addon, b.addonsList, false)
             row.findViewById<TextView>(R.id.addonName).text = ext.name
             row.findViewById<TextView>(R.id.addonDesc).text = "${ext.version} · ${ext.description}"
-            val sw = row.findViewById<Switch>(R.id.addonSwitch)
+            val sw = row.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.addonSwitch)
             sw.isChecked = ext.enabled
             sw.setOnCheckedChangeListener { _, v -> ExtensionManager.setEnabled(ext.id, v) }
             row.findViewById<android.widget.ImageButton>(R.id.addonUninstall).setOnClickListener {
