@@ -47,5 +47,13 @@ object Prefs {
 
     fun init(context: Context) {
         sp = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        migrateStartPage()
+    }
+
+    private fun migrateStartPage() {
+        val saved = sp.getString("start_page", null)
+        if (saved != null && saved != DEFAULT_START_PAGE && !saved.startsWith("file:///android_asset/home")) {
+            sp.edit().putString("start_page", DEFAULT_START_PAGE).apply()
+        }
     }
 }
