@@ -38,6 +38,7 @@ import com.lwbrowser.databinding.ErrorPageBinding
 import com.lwbrowser.databinding.FindBarBinding
 import com.lwbrowser.databinding.ItemTabBinding
 import com.lwbrowser.ext.ExtensionManager
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private lateinit var b: ActivityMainBinding
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resolveInitialUrl(intent: Intent): String {
+        intent.getStringExtra("url")?.let { return it }
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.toString()?.let { return it }
         }
@@ -86,9 +88,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        when (intent.action) {
-            Intent.ACTION_VIEW -> intent.data?.toString()?.let { openInNewTab(it) }
-            ACTION_FOCUS_SEARCH -> focusUrlBar()
+        when {
+            intent.getStringExtra("url") != null -> intent.getStringExtra("url")?.let { openInNewTab(it) }
+            intent.action == Intent.ACTION_VIEW -> intent.data?.toString()?.let { openInNewTab(it) }
+            intent.action == ACTION_FOCUS_SEARCH -> focusUrlBar()
         }
     }
 
@@ -399,6 +402,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun injectContentScripts(wv: WebView, url: String, runAt: String) {
         for (ext in ExtensionManager.scriptsFor(url, runAt)) {
+            wv.evaluateJavascript(ExtensionManager.buildChromeApiShim(ext.id), null)
             for (cs in ext.scriptsFor(url, runAt)) {
                 for (cssFile in cs.css) {
                     val css = ExtensionManager.loadFile(ext.id, cssFile) ?: continue
@@ -412,6 +416,17 @@ class MainActivity : AppCompatActivity() {
                     val js = ExtensionManager.loadFile(ext.id, jsFile) ?: continue
                     wv.evaluateJavascript(js, null)
                 }
+            }
+        }
+    }
+
+    private fun injectBackgroundScripts(wv: WebView) {
+        for (ext in ExtensionManager.backgroundScripts()) {
+            val bg = ext.background ?: continue
+            wv.evaluateJavascript(ExtensionManager.buildChromeApiShim(ext.id), null)
+            for (scriptFile in bg.scripts) {
+                val js = ExtensionManager.loadFile(ext.id, scriptFile) ?: continue
+                wv.evaluateJavascript(js, null)
             }
         }
     }
@@ -525,6 +540,26 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { takeScreenshot(w, h) }
             }
         }, "LumenReaderCallback")
+        wv.addJavascriptInterface(
+            com.lwbrowser.ext.ChromeApi(
+                extDir = File(filesDir, "extensions"),
+                onOpenUrl = { url -> runOnUiThread { openInNewTab(url) } },
+                onQueryTabs = {
+                    val arr = org.json.JSONArray()
+                    tabs.all.forEachIndexed { i, tab ->
+                        val obj = org.json.JSONObject()
+                        obj.put("id", i + 1)
+                        obj.put("url", tab.url)
+                        obj.put("title", tab.title)
+                        obj.put("active", tab === tabs.current)
+                        arr.put(obj)
+                    }
+                    arr.toString()
+                },
+                onActiveTabUrl = { tabs.current?.url ?: "" }
+            ),
+            "_lumenChromeNative"
+        )
         return wv
     }
 
@@ -649,7 +684,10 @@ class MainActivity : AppCompatActivity() {
                 injectAntiFingerprint(view)
                 if (Prefs.blockAds) injectCosmeticFilters(view)
                 if (Prefs.blockWebRTC) injectWebRTCBlock(view)
-                if (url != null) injectContentScripts(view, url, "document_start")
+                if (url != null) {
+                    injectBackgroundScripts(view)
+                    injectContentScripts(view, url, "document_start")
+                }
             }
         }
 

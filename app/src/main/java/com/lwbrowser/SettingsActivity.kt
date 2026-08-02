@@ -172,11 +172,29 @@ class SettingsActivity : AppCompatActivity() {
         b.addonsList.removeAllViews()
         for (ext in extensions) {
             val row = LayoutInflater.from(this).inflate(R.layout.item_addon, b.addonsList, false)
+            val iconView = row.findViewById<android.widget.ImageView>(R.id.addonIcon)
+            val iconPath = ext.icons["128"] ?: ext.icons["64"] ?: ext.icons["48"] ?: ext.icons["32"] ?: ext.icons.values.firstOrNull()
+            if (iconPath != null) {
+                val base64 = ExtensionManager.loadIconBase64(ext.id, iconPath)
+                if (base64 != null) {
+                    runCatching {
+                        val bytes = android.util.Base64.decode(base64.substringAfter("base64,"), android.util.Base64.DEFAULT)
+                        val bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        iconView.setImageBitmap(bmp)
+                    }
+                }
+            }
             row.findViewById<TextView>(R.id.addonName).text = ext.name
             row.findViewById<TextView>(R.id.addonDesc).text = "${ext.version} · ${ext.description}"
+            val allPerms = ext.permissions + ext.hostPermissions
+            val permsText = if (allPerms.isEmpty()) "No permissions" else "Permissions: ${allPerms.take(4).joinToString(", ")}${if (allPerms.size > 4) " +${allPerms.size - 4}" else ""}"
+            row.findViewById<TextView>(R.id.addonPerms).text = permsText
             val sw = row.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.addonSwitch)
             sw.isChecked = ext.enabled
             sw.setOnCheckedChangeListener { _, v -> ExtensionManager.setEnabled(ext.id, v) }
+            row.setOnClickListener {
+                showAddonDetails(ext)
+            }
             row.findViewById<android.widget.ImageButton>(R.id.addonUninstall).setOnClickListener {
                 Dialogs.confirm(
                     this,
@@ -192,6 +210,57 @@ class SettingsActivity : AppCompatActivity() {
             }
             b.addonsList.addView(row)
         }
+    }
+
+    private fun showAddonDetails(ext: com.lwbrowser.ext.Extension) {
+        val perms = ext.permissions.joinToString("\n") { "• $it" }
+        val hostPerms = ext.hostPermissions.joinToString("\n") { "• $it" }
+        val contentScriptCount = ext.contentScripts.size
+        val hasBg = ext.background != null
+        val hasOptions = ext.optionsPage != null
+        val message = buildString {
+            append("Version: ${ext.version}\n")
+            append("ID: ${ext.id}\n\n")
+            if (ext.description.isNotBlank()) {
+                append("${ext.description}\n\n")
+            }
+            append("Content scripts: $contentScriptCount\n")
+            append("Background script: ${if (hasBg) "Yes" else "No"}\n")
+            append("Options page: ${if (hasOptions) "Yes" else "No"}\n\n")
+            if (perms.isNotEmpty()) {
+                append("Permissions:\n$perms\n\n")
+            }
+            if (hostPerms.isNotEmpty()) {
+                append("Host permissions:\n$hostPerms\n\n")
+            }
+        }
+        val neutralText = if (hasOptions) "Options" else null
+        Dialogs.confirm(
+            this,
+            iconRes = R.drawable.ic_add,
+            title = ext.name,
+            message = message.trim(),
+            positiveText = "Uninstall",
+            negativeText = "Close",
+            neutralText = neutralText,
+            onPositive = {
+                ExtensionManager.uninstall(ext.id)
+                refreshAddons()
+            },
+            onNeutral = if (hasOptions && ext.optionsPage != null) {
+                {
+                    val optsPath = ext.optionsPage!!.page
+                    val optsFile = java.io.File(filesDir, "extensions/${ext.id}/$optsPath")
+                    if (optsFile.exists()) {
+                        val intent = Intent(this, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                            putExtra("url", "file://${optsFile.absolutePath}")
+                        }
+                        startActivity(intent)
+                    }
+                }
+            } else null
+        )
     }
 
     private fun styleDialog(d: AlertDialog) {

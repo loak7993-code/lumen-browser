@@ -144,6 +144,15 @@ object ExtensionManager {
         return extensions.filter { it.enabled && it.scriptsFor(url, runAt).isNotEmpty() }
     }
 
+    fun backgroundScripts(): List<Extension> {
+        return extensions.filter { it.enabled && it.background != null }
+    }
+
+    fun optionsPage(extId: String): String? {
+        val ext = extensions.find { it.id == extId } ?: return null
+        return ext.optionsPage?.page
+    }
+
     fun loadFile(extId: String, path: String): String? {
         val dir = File(extDir, extId)
         val file = File(dir, path)
@@ -152,5 +161,119 @@ object ExtensionManager {
         val base = manifest.parentFile ?: dir
         val resolved = File(base, path)
         return if (resolved.exists() && resolved.isFile) resolved.readText() else null
+    }
+
+    fun loadIconBase64(extId: String, iconPath: String): String? {
+        val dir = File(extDir, extId)
+        val file = File(dir, iconPath)
+        val actualFile = if (file.exists() && file.isFile) file else {
+            val manifest = findManifest(dir) ?: return null
+            val base = manifest.parentFile ?: dir
+            val resolved = File(base, iconPath)
+            if (resolved.exists() && resolved.isFile) resolved else return null
+        }
+        val mime = when {
+            iconPath.endsWith(".png") -> "png"
+            iconPath.endsWith(".jpg") || iconPath.endsWith(".jpeg") -> "jpeg"
+            iconPath.endsWith(".svg") -> "svg+xml"
+            iconPath.endsWith(".gif") -> "gif"
+            iconPath.endsWith(".webp") -> "webp"
+            else -> "png"
+        }
+        val bytes = actualFile.readBytes()
+        return "data:image/$mime;base64,${android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)}"
+    }
+
+    fun buildChromeApiShim(extId: String): String {
+        return """
+        (function() {
+            var _cb = window._lumenChromeNative;
+            var _id = "$extId";
+            if (!window.chrome) window.chrome = {};
+            if (!chrome.runtime) chrome.runtime = {};
+            if (!chrome.storage) chrome.storage = {};
+            if (!chrome.storage.local) chrome.storage.local = {};
+            if (!chrome.tabs) chrome.tabs = {};
+            if (!chrome.i18n) chrome.i18n = {};
+            if (!chrome.cookies) chrome.cookies = {};
+
+            function _cbResult(method, args) {
+                try { return _cb[method] ? _cb[method].apply(_cb, [_id].concat(args || [])) : undefined; }
+                catch(e) { console.log('chrome API error: ' + e); return undefined; }
+            }
+
+            chrome.storage.local.get = function(keys, cb) {
+                var result = _cbResult('storageLocalGet', [keys ? (typeof keys === 'object' ? JSON.stringify(keys) : keys) : 'null']);
+                var data = result ? JSON.parse(result) : {};
+                if (cb) cb(data);
+                return data;
+            };
+            chrome.storage.local.set = function(items, cb) {
+                _cbResult('storageLocalSet', [JSON.stringify(items)]);
+                if (cb) cb();
+            };
+            chrome.storage.local.remove = function(keys, cb) {
+                _cbResult('storageLocalRemove', [Array.isArray(keys) ? JSON.stringify(keys) : JSON.stringify([keys])]);
+                if (cb) cb();
+            };
+            chrome.storage.local.clear = function(cb) {
+                _cbResult('storageLocalClear');
+                if (cb) cb();
+            };
+
+            chrome.runtime.getURL = function(path) {
+                return _cbResult('runtimeGetURL', [path]);
+            };
+            chrome.runtime.getManifest = function() {
+                var m = _cbResult('runtimeGetManifest');
+                return m ? JSON.parse(m) : {};
+            };
+            chrome.runtime.id = _id;
+            chrome.runtime.sendMessage = function(msg, cb) {
+                _cbResult('runtimeSendMessage', [JSON.stringify(msg)]);
+                if (cb) cb({});
+            };
+            chrome.runtime.connect = function(name) {
+                _cbResult('runtimeConnect', [name]);
+                return { onMessage: { addListener: function(){} }, postMessage: function(){} };
+            };
+            chrome.runtime.onMessage = { addListener: function(){} };
+            chrome.runtime.onInstalled = { addListener: function(){} };
+
+            chrome.tabs.create = function(props, cb) {
+                _cbResult('tabsCreate', [props.url]);
+                if (cb) cb({id: 1});
+                return 1;
+            };
+            chrome.tabs.update = function(tabId, props, cb) {
+                _cbResult('tabsUpdate', [tabId, props.url]);
+                if (cb) cb({id: tabId});
+            };
+            chrome.tabs.query = function(info, cb) {
+                var result = _cbResult('tabsQuery', [JSON.stringify(info)]);
+                var tabs = result ? JSON.parse(result) : [];
+                if (cb) cb(tabs);
+                return tabs;
+            };
+
+            chrome.i18n.getMessage = function(name) {
+                return _cbResult('i18nGetMessage', [name]);
+            };
+
+            chrome.cookies.getAll = function(props, cb) {
+                var domain = props.domain || '';
+                var result = _cbResult('cookiesGetAll', [domain]);
+                var cookies = result ? JSON.parse(result) : [];
+                if (cb) cb(cookies);
+                return cookies;
+            };
+            chrome.cookies.remove = function(url, name, cb) {
+                _cbResult('cookiesRemove', [url, name]);
+                if (cb) cb({});
+            };
+
+            window.chrome = chrome;
+        })();
+        """.trimIndent()
     }
 }

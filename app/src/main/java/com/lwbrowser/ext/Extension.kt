@@ -14,12 +14,29 @@ data class ContentScript(
     val allFrames: Boolean
 )
 
+data class BackgroundScript(
+    val scripts: List<String>,
+    val persistent: Boolean,
+    val type: String
+)
+
+data class OptionsPage(
+    val page: String,
+    val openInTab: Boolean
+)
+
 data class Extension(
     val id: String,
     val name: String,
     val version: String,
     val description: String,
     val contentScripts: List<ContentScript>,
+    val background: BackgroundScript?,
+    val optionsPage: OptionsPage?,
+    val permissions: List<String>,
+    val hostPermissions: List<String>,
+    val icons: Map<String, String>,
+    val browserAction: Map<String, String>,
     val enabled: Boolean = true
 ) {
     fun scriptsFor(url: String, runAt: String): List<ContentScript> {
@@ -32,6 +49,8 @@ data class Extension(
                 (cs.excludeGlobs.isEmpty() || cs.excludeGlobs.none { GlobPattern.matches(it, url) })
         }
     }
+
+    fun hasPermission(perm: String): Boolean = permissions.contains(perm) || hostPermissions.contains(perm)
 
     companion object {
         fun fromManifest(id: String, manifestJson: String, enabled: Boolean = true): Extension {
@@ -56,14 +75,66 @@ data class Extension(
                 }
             }
 
+            val background: BackgroundScript? = parseBackground(manifest)
+            val optionsPage = parseOptionsPage(manifest)
+            val permissions = parseStringList(manifest.optJSONArray("permissions"))
+            val hostPermissions = parseStringList(manifest.optJSONArray("host_permissions"))
+            val icons = parseStringMap(manifest.optJSONObject("icons"))
+            val browserAction = parseBrowserAction(manifest)
+
             return Extension(
                 id = id,
                 name = manifest.optString("name", id),
                 version = manifest.optString("version", "1.0"),
                 description = manifest.optString("description", ""),
                 contentScripts = contentScripts,
+                background = background,
+                optionsPage = optionsPage,
+                permissions = permissions,
+                hostPermissions = hostPermissions,
+                icons = icons,
+                browserAction = browserAction,
                 enabled = enabled
             )
+        }
+
+        private fun parseBackground(manifest: JSONObject): BackgroundScript? {
+            val bg = manifest.optJSONObject("background")
+                ?: manifest.optJSONObject("background") ?: return null
+            val scripts = parseStringList(bg.optJSONArray("scripts"))
+            val serviceWorker = bg.optString("service_worker", "")
+            val allScripts = if (serviceWorker.isNotEmpty()) listOf(serviceWorker) else scripts
+            if (allScripts.isEmpty()) return null
+            val persistent = bg.optBoolean("persistent", false)
+            val type = if (serviceWorker.isNotEmpty()) "service_worker" else "scripts"
+            return BackgroundScript(allScripts, persistent, type)
+        }
+
+        private fun parseOptionsPage(manifest: JSONObject): OptionsPage? {
+            val optsPage = manifest.optString("options_page", "")
+            val optsUi = manifest.optJSONObject("options_ui")
+            return when {
+                optsUi != null -> OptionsPage(optsUi.optString("page", ""), optsUi.optBoolean("open_in_tab", false))
+                optsPage.isNotEmpty() -> OptionsPage(optsPage, true)
+                else -> null
+            }
+        }
+
+        private fun parseBrowserAction(manifest: JSONObject): Map<String, String> {
+            val ba = manifest.optJSONObject("browser_action")
+                ?: manifest.optJSONObject("action")
+                ?: return emptyMap()
+            val map = mutableMapOf<String, String>()
+            val icons = ba.optJSONObject("default_icon")
+            if (icons != null) {
+                for (key in icons.keys()) map["icon_$key"] = icons.getString(key)
+            } else {
+                val icon = ba.optString("default_icon", "")
+                if (icon.isNotEmpty()) map["icon"] = icon
+            }
+            map["title"] = ba.optString("default_title", "")
+            map["popup"] = ba.optString("default_popup", "")
+            return map
         }
 
         private fun parsePatterns(arr: JSONArray?): List<MatchPattern> {
@@ -80,6 +151,13 @@ data class Extension(
             val list = mutableListOf<String>()
             for (i in 0 until arr.length()) list.add(arr.getString(i))
             return list
+        }
+
+        private fun parseStringMap(obj: JSONObject?): Map<String, String> {
+            if (obj == null) return emptyMap()
+            val map = mutableMapOf<String, String>()
+            for (key in obj.keys()) map[key] = obj.getString(key)
+            return map
         }
     }
 }
