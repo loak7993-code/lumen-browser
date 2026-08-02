@@ -33,9 +33,13 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.lwbrowser.databinding.ActivityMainBinding
+import com.lwbrowser.databinding.DialogExtensionPickerBinding
+import com.lwbrowser.databinding.DialogExtensionPopupBinding
 import com.lwbrowser.databinding.ErrorPageBinding
 import com.lwbrowser.databinding.FindBarBinding
+import com.lwbrowser.databinding.ItemExtensionPickerBinding
 import com.lwbrowser.databinding.ItemTabBinding
 import com.lwbrowser.ext.ExtensionManager
 import java.io.File
@@ -430,12 +434,28 @@ class MainActivity : AppCompatActivity() {
             showExtensionPopup(exts[0])
             return
         }
-        val names = exts.map { it.name }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("Extensions")
-            .setItems(names) { _, which -> showExtensionPopup(exts[which]) }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        // Bottom-sheet picker — slides up from the bottom with extension rows.
+        val sheet = BottomSheetDialog(this)
+        val binding = DialogExtensionPickerBinding.inflate(LayoutInflater.from(this))
+        sheet.setContentView(binding.root)
+        sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+        for (ext in exts) {
+            val row = ItemExtensionPickerBinding.inflate(LayoutInflater.from(this), binding.extPickerList, false)
+            row.extRowName.text = ext.name
+            // Try to load the extension's icon; fall back to the addons icon.
+            val iconPath = ext.icons["128"] ?: ext.icons["48"] ?: ext.icons["16"]
+            if (iconPath != null) {
+                val base64 = ExtensionManager.loadIconBase64(ext.id, iconPath)
+                if (base64 != null) {
+                    val bytes = android.util.Base64.decode(base64.substringAfter(","), android.util.Base64.DEFAULT)
+                    row.extRowIcon.setImageBitmap(android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                    row.extRowIcon.imageTintList = null
+                }
+            }
+            row.root.setOnClickListener { sheet.dismiss(); showExtensionPopup(ext) }
+            binding.extPickerList.addView(row.root)
+        }
+        sheet.show()
     }
 
     private fun showExtensionPopup(ext: com.lwbrowser.ext.Extension) {
@@ -453,7 +473,6 @@ class MainActivity : AppCompatActivity() {
         val baseUrl = "file://${filesDir.absolutePath}/extensions/${ext.id}/"
 
         val density = resources.displayMetrics.density
-        val popupWidth = (380 * density).toInt()
         val popupHeight = (640 * density).toInt()
 
         val popupWv = WebView(this).apply {
@@ -467,7 +486,7 @@ class MainActivity : AppCompatActivity() {
             // layers and forcing hardware can cause text artifacts or a blank
             // popup on some GPUs.
             setBackgroundColor(0xFF07080F.toInt())
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
+            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
             // Expose the Chrome API bridge so popup scripts can call chrome.storage.* etc.
             addJavascriptInterface(
                 com.lwbrowser.ext.ChromeApi(
@@ -506,16 +525,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val dialog = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar)
-        dialog.setContentView(popupWv)
-        dialog.window?.let { w ->
-            w.setLayout(popupWidth, popupHeight)
-            w.setGravity(android.view.Gravity.CENTER)
-            w.setBackgroundDrawableResource(android.R.color.transparent)
-            w.setDimAmount(0.3f)
-        }
-        dialog.setOnDismissListener { popupWv.destroy() }
-        dialog.show()
+        // Modal bottom-sheet popup — slides up from the bottom, full-width, with
+        // a header (extension name + close X) and the WebView filling the rest.
+        val sheet = BottomSheetDialog(this)
+        val binding = DialogExtensionPopupBinding.inflate(LayoutInflater.from(this))
+        binding.extPopupTitle.text = ext.name
+        binding.extPopupClose.setOnClickListener { sheet.dismiss() }
+        binding.extPopupWebContainer.addView(popupWv)
+        sheet.setContentView(binding.root)
+        sheet.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+        sheet.behavior.peekHeight = popupHeight
+        sheet.behavior.skipCollapsed = true
+        // Destroy the WebView when the sheet is dismissed (close button, back
+        // button, or drag-down) so it doesn't leak.
+        sheet.setOnDismissListener { popupWv.destroy() }
+        sheet.show()
 
         popupWv.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", baseUrl)
     }
