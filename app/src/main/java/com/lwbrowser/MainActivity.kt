@@ -926,6 +926,9 @@ class MainActivity : AppCompatActivity() {
     private fun updateChromeFromTab(tab: Tab) {
         b.securityIcon.visibility = if (UrlUtils.isSecure(tab.url)) View.VISIBLE else View.GONE
         if (!b.urlField.isFocused) b.urlField.setText(displayUrl(tab.url))
+        // Disable pull-to-refresh for extension popup tabs (file://) so
+        // scrolling up doesn't trigger a page refresh.
+        b.swipe.isEnabled = !tab.url.startsWith("file://")
         updateTabCount()
     }
 
