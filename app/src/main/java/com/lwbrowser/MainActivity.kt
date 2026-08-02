@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun expandUrlBar() {
-        val navButtons = listOf(b.btnBack, b.btnForward, b.btnHome, b.btnRefresh, b.btnMenu)
+        val navButtons = listOf(b.btnTabs, b.btnMenu)
         for (btn in navButtons) {
             btn.animate()
                 .alpha(0f)
@@ -145,33 +145,39 @@ class MainActivity : AppCompatActivity() {
                 .withEndAction { btn.visibility = View.INVISIBLE }
                 .start()
         }
+        b.tabCount.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .start()
         b.urlBarContainer.animate()
             .scaleX(1.03f)
             .scaleY(1.03f)
             .setDuration(200)
             .start()
-        animateTextSize(b.urlField, 18f)
+        animateTextSize(b.urlField, 16f)
     }
 
     private fun collapseUrlBar() {
-        val navButtons = listOf(b.btnBack, b.btnForward, b.btnHome, b.btnRefresh, b.btnMenu)
+        val navButtons = listOf(b.btnTabs, b.btnMenu)
         for (btn in navButtons) {
             btn.visibility = View.VISIBLE
             btn.animate()
-                .alpha(if (btn == b.btnBack && (tabs.current?.canGoBack != true)) 0.4f
-                      else if (btn == b.btnForward && (tabs.current?.canGoForward != true)) 0.4f
-                      else 1f)
+                .alpha(1f)
                 .scaleX(1f)
                 .scaleY(1f)
                 .setDuration(200)
                 .start()
         }
+        b.tabCount.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
         b.urlBarContainer.animate()
             .scaleX(1f)
             .scaleY(1f)
             .setDuration(200)
             .start()
-        animateTextSize(b.urlField, 16f)
+        animateTextSize(b.urlField, 14f)
     }
 
     private fun animateTextSize(view: EditText, targetSp: Float) {
@@ -186,21 +192,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupNav() {
-        b.btnBack.setOnClickListener {
-            val wv = currentWebView() ?: return@setOnClickListener
-            if (wv.canGoBack()) wv.goBack()
+        b.btnTabs.setOnClickListener {
+            showTabsDialog()
         }
-        b.btnForward.setOnClickListener {
-            val wv = currentWebView() ?: return@setOnClickListener
-            if (wv.canGoForward()) wv.goForward()
-        }
-        b.btnRefresh.setOnClickListener {
-            val tab = tabs.current
-            if (tab?.isLoading == true) tab.webView.stopLoading() else tab?.webView?.reload()
-        }
-        b.btnHome.setOnClickListener {
-            currentWebView()?.loadUrl(Prefs.startPage)
-        }
+        updateTabCount()
+    }
+
+    private fun updateTabCount() {
+        b.tabCount.text = tabs.count.toString()
     }
 
     private fun setupMenu() {
@@ -229,6 +228,10 @@ class MainActivity : AppCompatActivity() {
             sheet.dismiss()
         }
         view.findViewById<View>(R.id.qaShare).setOnClickListener { sheet.dismiss(); shareCurrent() }
+        view.findViewById<View>(R.id.qaHome).setOnClickListener {
+            sheet.dismiss()
+            currentWebView()?.loadUrl(Prefs.startPage)
+        }
         view.findViewById<View>(R.id.qaRefresh).setOnClickListener {
             sheet.dismiss()
             val tab = tabs.current
@@ -488,6 +491,7 @@ class MainActivity : AppCompatActivity() {
         val tab = tabs.newTab(url)
         attachTab(tab, restore = false)
         tab.webView.loadUrl(url)
+        updateTabCount()
     }
 
     private fun openSettings() {
@@ -650,12 +654,9 @@ class MainActivity : AppCompatActivity() {
     private fun currentWebView(): WebView? = tabs.current?.takeIf { it.webViewReady() }?.webView
 
     private fun updateChromeFromTab(tab: Tab) {
-        b.btnBack.isEnabled = tab.canGoBack
-        b.btnForward.isEnabled = tab.canGoForward
-        b.btnBack.alpha = if (tab.canGoBack) 1f else 0.4f
-        b.btnForward.alpha = if (tab.canGoForward) 1f else 0.4f
         b.securityIcon.visibility = if (UrlUtils.isSecure(tab.url)) View.VISIBLE else View.GONE
         if (!b.urlField.isFocused) b.urlField.setText(displayUrl(tab.url))
+        updateTabCount()
     }
 
     private fun displayUrl(url: String?): String {
@@ -687,7 +688,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setRefreshIcon(loading: Boolean) {
-        b.btnRefresh.setImageResource(if (loading) R.drawable.ic_stop else R.drawable.ic_refresh)
     }
 
     inner class BrowserWebViewClient : WebViewClient() {
@@ -956,8 +956,10 @@ class MainActivity : AppCompatActivity() {
                 val tab = tabs.newTab(Prefs.startPage)
                 attachTab(tab, restore = false)
                 tab.webView.loadUrl(Prefs.startPage)
+                updateTabCount()
             } else {
                 tabs.current?.let { attachTab(it, restore = true) }
+                updateTabCount()
                 dismissActiveDialog()
                 showTabsDialog()
             }
@@ -1058,6 +1060,7 @@ class MainActivity : AppCompatActivity() {
             tabs.count > 1 -> {
                 tabs.current?.let { tabs.close(it) }
                 tabs.current?.let { attachTab(it, restore = true) } ?: finish()
+                updateTabCount()
             }
             else -> {
                 super.onBackPressed()
