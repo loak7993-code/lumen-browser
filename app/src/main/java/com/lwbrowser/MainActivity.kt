@@ -489,40 +489,33 @@ class MainActivity : AppCompatActivity() {
         // via loadUrl, and the user can interact with it like any other page.
         val tab = tabs.newTab(popupFileUrl)
         attachTab(tab, restore = false)
-        // Override the WebView settings so the popup fills the phone width
-        // perfectly. The default tab settings (useWideViewPort=true,
-        // loadWithOverviewMode=true) render at a desktop layout width and
-        // scale down, leaving empty space on the sides. For the popup we want
-        // the layout width to equal the device width.
-        tab.webView.settings.useWideViewPort = false
-        tab.webView.settings.loadWithOverviewMode = false
-        tab.webView.setInitialScale(100)
         tab.webView.loadUrl(popupFileUrl)
         updateTabCount()
 
         // Inject the chrome.* API shim into the tab's WebView so the popup's
         // JS can call chrome.storage.*, chrome.tabs.*, etc. Inject in both
         // onPageStarted (before page scripts run) and onPageFinished (fallback).
-        // Also inject a viewport override so the popup fills the phone width
-        // perfectly regardless of what its <meta viewport> says.
+        // Also inject a CSS override that forces the popup to fill the phone
+        // width — the popup's own CSS may have fixed widths or max-widths.
         val wv = tab.webView
-        val viewportOverride = """
+        val cssOverride = """
             (function(){
-                var m=document.querySelector('meta[name=viewport]');
-                if(!m){m=document.createElement('meta');m.name='viewport';document.head.appendChild(m);}
-                m.setAttribute('content','width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover');
+                var s=document.createElement('style');
+                s.id='__lumen_fullwidth';
+                s.textContent='html,body{width:100vw!important;margin:0!important;padding:0!important;overflow-x:hidden!important;}.popup{width:100vw!important;max-width:100vw!important;margin:0!important;}*{max-width:100vw!important;}';
+                (document.head||document.documentElement).appendChild(s);
             })();
         """.trimIndent()
         wv.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 view?.evaluateJavascript(shim, null)
-                view?.evaluateJavascript(viewportOverride, null)
+                view?.evaluateJavascript(cssOverride, null)
             }
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 view?.evaluateJavascript(shim, null)
-                view?.evaluateJavascript(viewportOverride, null)
+                view?.evaluateJavascript(cssOverride, null)
             }
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
